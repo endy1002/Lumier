@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===== LUMIER Design System ===== */
+
+:root {
+  --brand-white: #FFFFFF;
+  --brand-amber: #F2A900;
+  --brand-gold: #FFE264;
+  --brand-cream: #FDF6E3;
+  --brand-cream-dark: #F5E6C8;
+  --brand-blue: #307FE2;
+  --brand-navy: #00205B;
+  --brand-deep-blue: #003087;
+  --brand-charcoal: #1A1A1A;
+  --brand-muted: #6B7280;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  color: var(--brand-charcoal);
+  background-color: var(--brand-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ===== Custom Scrollbar ===== */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--brand-cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--brand-amber);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #d4940a;
+}
+
+/* ===== Typography Helpers ===== */
+.font-heading {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-display {
+  font-family: 'DM Serif Display', serif;
+}
+
+.font-mono-brand {
+  font-family: 'Space Mono', monospace;
+}
+
+/* ===== Marquee ===== */
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+/* ===== Horizontal Scroll Shelf ===== */
+.bookshelf-scroll {
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: var(--brand-amber) var(--brand-cream);
+}
+
+.bookshelf-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.bookshelf-scroll::-webkit-scrollbar-thumb {
+  background: var(--brand-amber);
+  border-radius: 3px;
+}
+
+.shelf-item {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* ===== Glass Effect ===== */
+.glass {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ===== Gradient Backgrounds ===== */
+.gradient-navy {
+  background: linear-gradient(135deg, var(--brand-navy) 0%, var(--brand-deep-blue) 100%);
+}
+
+.gradient-amber {
+  background: linear-gradient(135deg, var(--brand-amber) 0%, var(--brand-gold) 100%);
+}
+
+.gradient-hero {
+  background: linear-gradient(180deg, var(--brand-cream) 0%, var(--brand-cream-dark) 100%);
+}
+
+/* ===== Cart Drawer ===== */
+.cart-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 90;
+  transition: opacity 0.3s ease;
+}
+
+/* ===== Toast Notification ===== */
+.toast-enter {
+  animation: slideInRight 0.4s ease-out forwards;
+}
+
+.toast-exit {
+  animation: slideOutRight 0.3s ease-in forwards;
+}
+
+@keyframes slideOutRight {
+  0% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(100%); }
+}
+
+/* ===== Section Transitions ===== */
+.section-reveal {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== Product Card Hover ===== */
+.product-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+/* ===== Bento Grid ===== */
+@layer components {
+  .bento-card {
+    @apply rounded-2xl p-6 transition-all duration-300 hover:shadow-lg;
+  }
+}
+
+/* ===== Checkout Form ===== */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--brand-amber);
+  box-shadow: 0 0 0 3px rgba(242, 169, 0, 0.15);
+}
+
+/* ===== Page Transitions ===== */
+.page-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 0.4s ease-out;
+}

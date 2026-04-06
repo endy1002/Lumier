@@ -1,0 +1,78 @@
+import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
+import { BRAND } from '../../config/constants';
+
+export default function HeroSection() {
+  return (
+    <section className="gradient-hero relative overflow-hidden">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left: Bookcharm Image with floating animation */}
+          <div className="relative flex justify-center lg:justify-start order-1 lg:order-1">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 md:w-[28rem] md:h-[28rem] rounded-full bg-brand-amber/20 blur-sm" />
+
+            {/* Product image container with sway animation */}
+            <div className="relative z-10 animate-sway pointer-events-none translate-x-4 md:translate-x-12">
+              <div className="w-80 h-96 md:w-[35rem] md:h-[34rem] flex items-center justify-center">
+                <img
+                  src="/images/products/charm-golden.png"
+                  alt="The Golden Book Charm"
+                  className="w-full h-full object-contain scale-[1.2]"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = `
+                      <div class="flex flex-col items-center justify-center text-center p-6 h-full border-2 border-dashed border-brand-amber/40 rounded-3xl">
+                        <div class="text-6xl mb-4">📚</div>
+                        <p class="font-golan text-lg text-brand-navy">Merchant Image</p>
+                      </div>
+                    `;
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Brand text & CTA */}
+          <div className="order-2 lg:order-2 text-center lg:text-left">
+            <h1 className="font-golan text-4xl md:text-5xl lg:text-6xl font-bold text-brand-charcoal leading-tight mb-6">
+              The Golden Book
+              <br />
+              <span className="text-brand-navy">Charm</span>
+            </h1>
+
+            <p className="font-san text-base md:text-lg text-brand-muted leading-relaxed mb-8 max-w-lg">
+              {BRAND.description}
+            </p>
+
+            <Link
+              to="/san-pham"
+              className="inline-flex items-center gap-3 bg-brand-navy hover:bg-brand-deep-blue text-white font-san font-medium px-8 py-4 rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-brand-navy/20 group"
+            >
+              <span>Khám phá ngay</span>
+              <ArrowRight
+                size={18}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom wave decoration */}
+      <div className="absolute bottom-0 left-0 right-0">
+        <svg
+          viewBox="0 0 1440 60"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          className="w-full"
+        >
+          <path
+            d="M0 30C240 10 480 50 720 30C960 10 1200 50 1440 30V60H0V30Z"
+            fill="#FDF6E3"
+            fillOpacity="0.5"
+          />
+        </svg>
+      </div>
+    </section>
+  );
+}
