@@ -4,19 +4,18 @@ export default function SpecsSection() {
   const [ref, isVisible] = useScrollReveal();
 
   return (
-    <section className="py-20 bg-brand-cream relative overflow-hidden">
+    <section className="py-20 bg-white relative overflow-hidden">
       <div
         ref={ref}
-        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 section-reveal ${
-          isVisible ? 'visible' : ''
-        }`}
+        className={`max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 section-reveal ${isVisible ? 'visible' : ''
+          }`}
       >
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left: Product image / Specifications visual */}
           <div className="relative">
             <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-brand-cream-dark shadow-lg">
               <img
-                src="/images/hero/specs-bookcharm.jpg"
+                src="/images/hero/specs-bookcharm.png"
                 alt="Bookcharm specifications"
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -37,11 +36,11 @@ export default function SpecsSection() {
             </div>
 
             {/* Size annotation overlay */}
-            <div className="absolute bottom-4 left-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-4">
-              <p className="font-san text-xs text-brand-muted text-center">
-                <span className="font-semibold text-brand-charcoal">Kích thước:</span>{' '}
+            <div className="absolute bottom-4 left-4 right-4 bg-brand-navy shadow-xl backdrop-blur-sm rounded-xl p-4">
+              <p className="font-san text-sm text-white/90 text-center font-medium">
+                <span className="font-bold text-white">Kích thước:</span>{' '}
                 10cm × 5.5cm × 2.5cm •{' '}
-                <span className="font-semibold text-brand-charcoal">Trọng lượng:</span>{' '}
+                <span className="font-bold text-white">Trọng lượng:</span>{' '}
                 450g
               </p>
             </div>
@@ -54,9 +53,9 @@ export default function SpecsSection() {
             </p>
             <h2 className="font-golan text-3xl md:text-4xl font-bold text-brand-charcoal leading-snug mb-6">
               Với kích thước chỉ vỏn vẹn{' '}
-              <span className="text-brand-navy">10cm × 5.5cm × 2.5cm</span>
+              <span className="text-brand-navy block text-center mt-4 text-4xl md:text-5xl border-y py-4 border-brand-cream-dark shadow-sm bg-brand-cream/30 rounded-2xl">10cm × 5.5cm × 2.5cm</span>
             </h2>
-            <p className="font-san text-base text-brand-muted leading-relaxed mb-6">
+            <p className="font-san text-base text-brand-charcoal leading-relaxed mb-6">
               Với kích thước chỉ vỏn vẹn 10cm x 5.5cm x 2.5cm và trọng lượng 450g giúp mọi
               bước đi của bạn đều thoải mái và nhẹ nhàng. Với lớp phủ polymer đặc biệt giúp
               ngăn thấm nước, chống bẩn và tăng độ bền cho bìa sách.
@@ -65,13 +64,13 @@ export default function SpecsSection() {
             {/* Feature bullets */}
             <div className="space-y-4">
               {[
-                { icon: '🪶', text: 'Siêu nhẹ chỉ 450g — thoải mái mang theo mọi nơi' },
-                { icon: '💧', text: 'Phủ polymer chống nước — bảo vệ toàn diện' },
-                { icon: '✨', text: 'Thủ công tinh xảo — mỗi sản phẩm là duy nhất' },
+                { text: 'Siêu nhẹ chỉ 450g — thoải mái mang theo mọi nơi' },
+                { text: 'Phủ polymer chống nước — bảo vệ toàn diện' },
+                { text: 'Thủ công tinh xảo — mỗi sản phẩm là duy nhất' },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
-                  <span className="text-2xl flex-shrink-0">{item.icon}</span>
-                  <p className="font-san text-sm text-brand-charcoal">{item.text}</p>
+                  <div className="w-1.5 h-1.5 rounded-full bg-brand-amber mt-2 flex-shrink-0" />
+                  <p className="font-san text-base text-brand-charcoal">{item.text}</p>
                 </div>
               ))}
             </div>

@@ -34,14 +34,15 @@ export default function HeroSection() {
 
           {/* Right: Brand text & CTA */}
           <div className="order-2 lg:order-2 text-center lg:text-left">
-            <h1 className="font-golan text-4xl md:text-5xl lg:text-6xl font-bold text-brand-charcoal leading-tight mb-6">
-              The Golden Book
-              <br />
-              <span className="text-brand-navy">Charm</span>
+            <h1 className="font-golan text-5xl md:text-6xl lg:text-7xl font-bold text-brand-navy leading-tight mb-2 tracking-wide">
+              LUMIER
             </h1>
+            <h2 className="font-heading text-2xl md:text-3xl text-brand-charcoal italic mb-6">
+              "Chạm tri thức, rực bản nguyên"
+            </h2>
 
-            <p className="font-san text-base md:text-lg text-brand-muted leading-relaxed mb-8 max-w-lg">
-              {BRAND.description}
+            <p className="font-san text-base md:text-[17px] text-brand-muted leading-relaxed mb-8 max-w-xl">
+              Vượt xa một món phụ kiện trang trí thông thường, Book Charm là sự giao thoa giữa thẩm mỹ cá nhân và giá trị tri thức. Với kích thước vừa vặn trong lòng bàn tay, món đồ nhỏ nhắn này không chỉ tạo điểm nhấn phong cách cho chiếc túi xách, mà còn là một “tín hiệu ngầm” giúp bạn kết nối với những tâm hồn đồng điệu. Đó là cách đầy tinh tế để bạn khẳng định gu đọc sách và tự hào chia sẻ về những tác phẩm mình tâm đắc.
             </p>
 
             <Link
@@ -68,8 +69,7 @@ export default function HeroSection() {
         >
           <path
             d="M0 30C240 10 480 50 720 30C960 10 1200 50 1440 30V60H0V30Z"
-            fill="#FDF6E3"
-            fillOpacity="0.5"
+            fill="#FFFFFF"
           />
         </svg>
       </div>

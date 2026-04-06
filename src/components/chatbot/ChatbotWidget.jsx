@@ -71,13 +71,14 @@ export default function ChatbotWidget() {
       {!isOpen && showBubble && (
         <div className="fixed bottom-6 right-6 z-[70] flex items-end gap-3">
           {/* Popup text */}
-          <div className="bg-white rounded-2xl rounded-br-none shadow-lg px-4 py-3 max-w-[200px] animate-fade-in-up">
-            <p className="font-san text-xs text-brand-charcoal">
-              Vẫn chưa tìm được sách đúng gu? 📚
+          <div className="relative bg-white rounded-2xl shadow-xl px-4 py-3 mr-2 max-w-[200px] animate-fade-in-up
+                          after:content-[''] after:absolute after:top-[60%] after:-right-[7px] after:-translate-y-1/2 after:border-t-[8px] after:border-t-transparent after:border-b-[8px] after:border-b-transparent after:border-l-[8px] after:border-l-white">
+            <p className="font-san text-xs text-brand-charcoal pr-2">
+              Tìm sách đúng gu với LumiAI
             </p>
             <button
               onClick={() => setShowBubble(false)}
-              className="absolute -top-1 -right-1 w-5 h-5 bg-brand-muted text-white rounded-full flex items-center justify-center text-xs hover:bg-brand-charcoal"
+              className="absolute -top-1.5 -left-1.5 w-5 h-5 bg-brand-charcoal text-white rounded-full flex items-center justify-center text-xs shadow-md border-2 border-white hover:bg-brand-amber transition-colors"
             >
               ×
             </button>

@@ -4,16 +4,16 @@ import { BRAND } from '../../config/constants';
 
 export default function Footer() {
   return (
-    <footer className="bg-brand-charcoal text-white">
+    <footer className="bg-brand-navy text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {/* Brand column */}
           <div className="lg:col-span-1">
             <h3 className="font-golan text-2xl font-bold text-brand-amber mb-4">
               {BRAND.name}
             </h3>
             <p className="font-san text-sm text-gray-400 leading-relaxed mb-6">
-              Chúng tôi tuyển chọn những sản phẩm tìm hiểu mãi vẫn mê mẩn cho từng bước đi. Tìm thấy sự kết nối yên bình, sống trong sự trong mãnh liệt.
+              Con người dù ít, dù nhiều chắc chắn vẫn có những cuốn sách yêu thích, những cuốn sách “gối đầu giường” cho riêng mình. Nó có thể định hình được cách cư xử, nhân sinh quan, hay đến cả mindset, skillset của bản thân.
             </p>
             <div className="flex gap-4">
               <a

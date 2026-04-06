@@ -6,9 +6,11 @@ export default function BentoGrid() {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = [
-    'bg-brand-blue/10 border-2 border-dashed border-brand-blue/30',
-    'bg-brand-amber/10 border-2 border-dashed border-brand-amber/30',
-    'bg-brand-gold/10 border-2 border-dashed border-brand-gold/30'
+    '/images/feedback/IMG_6274.PNG',
+    '/images/feedback/IMG_6275.PNG',
+    '/images/feedback/M1.jpg',
+    '/images/feedback/M2.jpg',
+    '/images/feedback/Screenshot 2026-04-05 192231.png'
   ];
 
   useEffect(() => {
@@ -19,15 +21,15 @@ export default function BentoGrid() {
   }, [slides.length]);
 
   return (
-    <section className="py-20 bg-brand-cream relative">
+    <section className="py-20 bg-white relative">
       <div
         ref={ref}
         className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 section-reveal ${isVisible ? 'visible' : ''
           }`}
       >
         {/* Section title */}
-        <div className="mb-10 inline-block border-b-4 border-brand-navy pb-1">
-          <h2 className="font-golan text-4xl md:text-5xl font-bold text-brand-navy tracking-tight">
+        <div className="mb-10 inline-block border-brand-navy pb-1">
+          <h2 className="font-golan text-2xl md:text-3xl font-medium text-brand-navy tracking-wide">
             Những niềm tự hào của Lumier
           </h2>
         </div>
@@ -46,15 +48,17 @@ export default function BentoGrid() {
 
               {/* Slideshow placeholder */}
               <div className="absolute inset-0 pt-[4.5rem] p-6">
-                <div className={`w-full h-full rounded-2xl transition-all duration-1000 flex items-center justify-center ${slides[currentSlide]}`}>
-                  <span className="font-san text-sm text-brand-charcoal/50">Hình ảnh slide {currentSlide + 1}</span>
+                <div className={`w-full h-full rounded-2xl transition-all duration-1000 flex items-center justify-center bg-gray-100 overflow-hidden`}>
+                  <img src={slides[currentSlide]} alt="Customer Feedback" className="w-full h-full object-cover" />
                 </div>
               </div>
             </div>
 
             {/* Quá trình tạo ra sản phẩm (short box) */}
-            <div className="flex-[4] bg-brand-cream border-2 border-brand-charcoal rounded-3xl p-6 min-h-[160px] flex items-center justify-center shadow-sm">
-              <h3 className="font-golan text-xl font-bold text-brand-charcoal text-center px-4">
+            <div className="flex-[4] rounded-3xl p-6 min-h-[160px] flex items-center justify-center shadow-md relative overflow-hidden group">
+              <div className="absolute inset-0 bg-brand-charcoal/40 transition-colors group-hover:bg-brand-charcoal/50 z-10" />
+              <img src="/images/products/process.png" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Process" />
+              <h3 className="font-golan text-xl font-bold text-white text-center px-4 relative z-20">
                 Quá trình tạo ra sản phẩm
               </h3>
             </div>
@@ -67,9 +71,9 @@ export default function BentoGrid() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-[4] min-h-[160px]">
 
               {/* 1000+ */}
-              <div className="bg-brand-cream border-2 border-brand-charcoal rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
+              <div className="bg-brand-amber rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
                 <p className="font-golan text-6xl md:text-7xl font-bold text-brand-charcoal mb-2">
-                  1000<span className="font-san font-normal text-4xl text-gray-400 absolute mt-2 ml-1">+</span>
+                  1000<span className="font-san font-normal text-4xl text-brand-charcoal/60 absolute mt-2 ml-1">+</span>
                 </p>
                 <p className="font-golan text-xl font-bold text-brand-charcoal mt-3">
                   bìa sách có sẵn
@@ -77,11 +81,11 @@ export default function BentoGrid() {
               </div>
 
               {/* 10+ */}
-              <div className="bg-brand-cream border-2 border-brand-charcoal rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
-                <p className="font-golan text-6xl md:text-7xl font-bold text-brand-charcoal mb-2 relative">
-                  10<span className="font-san font-normal text-4xl text-gray-400 absolute top-2 -right-6">+</span>
+              <div className="bg-brand-navy rounded-3xl p-6 flex flex-col items-center justify-center text-center shadow-sm">
+                <p className="font-golan text-6xl md:text-7xl font-bold text-white mb-2 relative">
+                  10<span className="font-san font-normal text-4xl text-white/70 absolute top-2 -right-6">+</span>
                 </p>
-                <p className="font-golan text-xl font-bold text-brand-charcoal mt-3">
+                <p className="font-golan text-xl font-bold text-white mt-3">
                   NXB cùng hợp tác
                 </p>
               </div>

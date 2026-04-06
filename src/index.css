@@ -30,7 +30,7 @@ html {
 body {
   font-family: 'Inter', sans-serif;
   color: var(--brand-charcoal);
-  background-color: var(--brand-cream);
+  background-color: var(--brand-white);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;

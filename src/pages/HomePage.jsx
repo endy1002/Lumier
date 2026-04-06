@@ -1,5 +1,6 @@
 import HeroSection from '../components/home/HeroSection';
 import StorySection from '../components/home/StorySection';
+import SpecsSection from '../components/home/SpecsSection';
 import BentoGrid from '../components/home/BentoGrid';
 
 export default function HomePage() {
@@ -7,6 +8,7 @@ export default function HomePage() {
     <div>
       <HeroSection />
       <StorySection />
+      <SpecsSection />
       <BentoGrid />
     </div>
   );

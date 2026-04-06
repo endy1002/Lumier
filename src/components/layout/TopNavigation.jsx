@@ -108,7 +108,7 @@ export default function TopNavigation({ onCartClick }) {
               >
                 <User size={20} strokeWidth={1.5} />
                 <span className="hidden sm:block font-san text-[13px] font-medium uppercase tracking-wide">
-                  Hello, [username]
+                  Hello Endy
                 </span>
               </Link>
             </div>
