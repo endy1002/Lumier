@@ -1,59 +1,202 @@
-import { useState } from 'react';
-import { useSearchParams, useOutletContext } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useOutletContext, useNavigate } from 'react-router-dom';
+import { Search, ShoppingBag, Minus, Plus, Trash2, Sparkles, X } from 'lucide-react';
 import BookshelfUI from '../components/products/BookshelfUI';
 import ProductRanking from '../components/products/ProductRanking';
 import CustomizePopup from '../components/products/CustomizePopup';
-import CustomizePanel from '../components/products/CustomizePanel';
 import { useCart } from '../context/CartContext';
+
+const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
+
+function createDraftKey(productId, customization) {
+  if (!customization) return `default:${productId}`;
+  return `custom:${productId}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
+}
+
+function readDraftSelection() {
+  try {
+    const raw = window.sessionStorage.getItem(SELECTION_DRAFT_KEY);
+    if (!raw) return [];
+
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed
+      .filter((entry) => entry?.product?.id)
+      .map((entry) => ({
+        draftKey: entry.draftKey || createDraftKey(entry.product.id, entry.customization || null),
+        product: entry.product,
+        customization: entry.customization || null,
+        quantity: Math.max(1, Number(entry.quantity) || 1),
+      }));
+  } catch {
+    return [];
+  }
+}
 
 export default function ProductsPage() {
   const [searchParams] = useSearchParams();
   const { showToast } = useOutletContext();
   const { addItem } = useCart();
+  const navigate = useNavigate();
 
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedItems, setSelectedItems] = useState([]);
+  const [pendingProduct, setPendingProduct] = useState(null);
   const [showCustomizePopup, setShowCustomizePopup] = useState(false);
-  const [showCustomizePanel, setShowCustomizePanel] = useState(false);
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
 
   // Check if redirected from search with no results
   const shouldCustomize = searchParams.get('customize') === 'true';
   const searchQuery = searchParams.get('search') || '';
 
-  const handleProductClick = (product) => {
-    setSelectedProduct(product);
+  useEffect(() => {
+    const draft = readDraftSelection();
+    setSelectedItems(draft);
+  }, []);
 
-    if (product.customizable) {
-      // Show customize popup for customizable products
+  useEffect(() => {
+    window.sessionStorage.setItem(SELECTION_DRAFT_KEY, JSON.stringify(selectedItems));
+  }, [selectedItems]);
+
+  const selectedQuantities = useMemo(
+    () =>
+      selectedItems.reduce((acc, item) => {
+        if (!item?.product?.id) return acc;
+        acc[item.product.id] = (acc[item.product.id] || 0) + item.quantity;
+        return acc;
+      }, {}),
+    [selectedItems]
+  );
+
+  const totalSelectedCount = useMemo(
+    () => selectedItems.reduce((sum, item) => sum + (item?.quantity || 0), 0),
+    [selectedItems]
+  );
+
+  const totalSelectedPrice = useMemo(
+    () =>
+      selectedItems.reduce(
+        (sum, item) => sum + (item?.product?.basePrice || 0) * (item?.quantity || 0),
+        0
+      ),
+    [selectedItems]
+  );
+
+  const addItemToSelection = (product, customization = null, replaceDraftKey = null) => {
+    setSelectedItems((prev) => {
+      if (replaceDraftKey) {
+        return prev.map((entry) =>
+          entry.draftKey === replaceDraftKey
+            ? {
+                ...entry,
+                product,
+                customization,
+              }
+            : entry
+        );
+      }
+
+      const found = prev.find(
+        (entry) =>
+          entry.product.id === product.id &&
+          JSON.stringify(entry.customization || null) === JSON.stringify(customization || null)
+      );
+
+      if (found && !customization) {
+        return prev.map((entry) =>
+          entry.draftKey === found.draftKey
+            ? { ...entry, quantity: entry.quantity + 1 }
+            : entry
+        );
+      }
+
+      return [
+        ...prev,
+        {
+          draftKey: createDraftKey(product.id, customization),
+          product,
+          customization,
+          quantity: 1,
+        },
+      ];
+    });
+
+    setShowSelectionModal(false);
+  };
+
+  const handleProductClick = (product) => {
+    if (product.category === 'CHARM') {
+      setPendingProduct(product);
       setShowCustomizePopup(true);
-    } else {
-      // Non-customizable: add directly to cart
-      addItem(product);
-      showToast(`${product.name} đã được thêm vào giỏ hàng!`);
+      return;
     }
+
+    addItemToSelection(product);
+  };
+
+  const updateSelectionQuantity = (draftKey, nextQuantity) => {
+    setSelectedItems((prev) => {
+      if (nextQuantity <= 0) {
+        return prev.filter((entry) => entry.draftKey !== draftKey);
+      }
+
+      return prev.map((entry) =>
+        entry.draftKey === draftKey
+          ? { ...entry, quantity: nextQuantity }
+          : entry
+      );
+    });
+  };
+
+  const removeSelectedItem = (draftKey) => {
+    setSelectedItems((prev) => prev.filter((entry) => entry.draftKey !== draftKey));
+  };
+
+  const handleCustomizeSelected = (entry) => {
+    if (entry.product.category !== 'CHARM') return;
+
+    window.sessionStorage.setItem(
+      'lumier-customize-payload',
+      JSON.stringify({
+        draftKey: entry.draftKey,
+        customization: entry.customization || null,
+      })
+    );
+
+    navigate(`/customize/${entry.product.id}?returnTo=products&draftKey=${encodeURIComponent(entry.draftKey)}`);
   };
 
   const handleCustomizeAccept = () => {
+    if (!pendingProduct) return;
+
+    window.sessionStorage.removeItem('lumier-customize-payload');
     setShowCustomizePopup(false);
-    setShowCustomizePanel(true);
+    navigate(`/customize/${pendingProduct.id}?returnTo=products`);
   };
 
   const handleCustomizeDecline = () => {
-    // Add to cart without customization
-    if (selectedProduct) {
-      addItem(selectedProduct);
-      showToast(`${selectedProduct.name} đã được thêm vào giỏ hàng!`);
+    if (pendingProduct) {
+      addItemToSelection(pendingProduct);
     }
+
     setShowCustomizePopup(false);
-    setSelectedProduct(null);
+    setPendingProduct(null);
   };
 
-  const handleCustomizeConfirm = (customization) => {
-    if (selectedProduct) {
-      addItem(selectedProduct, customization);
-      showToast(`${selectedProduct.name} (đã customize) đã được thêm vào giỏ hàng!`);
-    }
-    setShowCustomizePanel(false);
-    setSelectedProduct(null);
+  const handleConfirmAddAll = () => {
+    if (selectedItems.length === 0) return;
+
+    selectedItems.forEach((entry) => {
+      for (let i = 0; i < entry.quantity; i += 1) {
+        addItem(entry.product, entry.customization || null);
+      }
+    });
+
+    showToast(`Đã thêm ${totalSelectedCount} sản phẩm vào giỏ hàng!`);
+    setSelectedItems([]);
+    setPendingProduct(null);
+    setShowSelectionModal(false);
   };
 
   return (
@@ -66,6 +209,20 @@ export default function ProductsPage() {
         <p className="font-san text-sm text-brand-muted">
           Khám phá kệ sách Lumier — nơi mỗi cuốn sách là một tác phẩm nghệ thuật
         </p>
+      </div>
+
+      {/* Local search in products page */}
+      <div className="mb-8">
+        <div className="relative max-w-2xl">
+          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-muted" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Tìm nhanh sản phẩm ngay trong kệ sách..."
+            className="w-full rounded-2xl border-2 border-brand-cream-dark bg-white py-3.5 pl-11 pr-4 font-san text-sm"
+          />
+        </div>
       </div>
 
       {/* "Not found" message from search redirect */}
@@ -83,7 +240,12 @@ export default function ProductsPage() {
       {/* Main layout: Shelf + Ranking sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
         {/* Bookshelf */}
-        <BookshelfUI onProductClick={handleProductClick} />
+        <BookshelfUI
+          onProductClick={handleProductClick}
+          selectedProductId={pendingProduct?.id}
+          selectedQuantities={selectedQuantities}
+          searchTerm={searchTerm}
+        />
 
         {/* Sidebar: Bestseller Ranking */}
         <aside className="hidden lg:block">
@@ -94,7 +256,7 @@ export default function ProductsPage() {
       </div>
 
       {/* === Pricing Table === */}
-      <div className="mt-16 bg-white rounded-2xl p-8 shadow-sm">
+      <div className="mt-6 bg-white rounded-2xl p-8 shadow-sm mb-24">
         <h2 className="font-golan text-2xl font-bold text-brand-charcoal mb-6">
           Bảng Giá
         </h2>
@@ -136,7 +298,7 @@ export default function ProductsPage() {
                   50.000đ/lần
                 </td>
                 <td className="py-3 px-4 text-brand-muted">
-                  Khắc tên, dây chain, chọn màu gáy...
+                  Khắc tên, chọn màu gáy...
                 </td>
               </tr>
             </tbody>
@@ -145,27 +307,155 @@ export default function ProductsPage() {
       </div>
 
       {/* === Modals === */}
-      {showCustomizePopup && selectedProduct && (
+      {showCustomizePopup && pendingProduct && (
         <CustomizePopup
-          product={selectedProduct}
+          product={pendingProduct}
+          title="Tùy chỉnh những dấu ấn riêng của bạn chứ?"
+          description={`${pendingProduct.name} sẽ nổi bật hơn nếu bạn cá nhân hóa ngay bây giờ.`}
+          acceptLabel="Đồng ý"
+          declineLabel="Để sau"
+          hintText="Bạn vẫn có thể thêm bản mặc định vào danh sách Đang chọn và xác nhận ở bước cuối"
           onAccept={handleCustomizeAccept}
           onDecline={handleCustomizeDecline}
           onClose={() => {
             setShowCustomizePopup(false);
-            setSelectedProduct(null);
+            setPendingProduct(null);
           }}
         />
       )}
 
-      {showCustomizePanel && selectedProduct && (
-        <CustomizePanel
-          product={selectedProduct}
-          onConfirm={handleCustomizeConfirm}
-          onCancel={() => {
-            setShowCustomizePanel(false);
-            setSelectedProduct(null);
-          }}
-        />
+      {selectedItems.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[min(96vw,980px)] bg-white/95 backdrop-blur-md border border-brand-cream-dark rounded-2xl shadow-2xl">
+          <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="font-san text-xs uppercase tracking-wider text-brand-muted">Đang chọn</p>
+              <p className="font-golan text-lg font-bold text-brand-charcoal">
+                {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setShowSelectionModal(true)}
+                className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-brand-cream-dark font-san text-xs md:text-sm text-brand-charcoal hover:border-brand-amber"
+              >
+                Chi tiết
+              </button>
+              <button
+                onClick={handleConfirmAddAll}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-navy text-white font-san text-xs md:text-sm font-medium hover:bg-brand-deep-blue"
+              >
+                <ShoppingBag size={14} />
+                Xác nhận thêm vào giỏ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSelectionModal && selectedItems.length > 0 && (
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/45 backdrop-blur-sm"
+            onClick={() => setShowSelectionModal(false)}
+          />
+
+          <div className="relative bg-white rounded-2xl border border-brand-cream-dark shadow-2xl w-[min(96vw,920px)] max-h-[86vh] overflow-hidden">
+            <div className="px-5 py-4 border-b border-brand-cream-dark flex items-center justify-between">
+              <div>
+                <p className="font-san text-xs uppercase tracking-wider text-brand-muted">Đang chọn</p>
+                <p className="font-golan text-lg font-bold text-brand-charcoal">
+                  {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
+                </p>
+              </div>
+              <button
+                onClick={() => setShowSelectionModal(false)}
+                className="w-9 h-9 rounded-full border border-brand-cream-dark flex items-center justify-center text-brand-charcoal hover:border-brand-amber"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-4 md:p-5 max-h-[58vh] overflow-y-auto">
+              <div className="space-y-2">
+                {selectedItems.filter((entry) => entry?.product?.id).map((entry) => (
+                  <div key={entry.draftKey} className="flex items-center justify-between gap-3 border border-brand-cream rounded-xl px-3 py-2">
+                    <div className="min-w-0 flex items-center gap-3">
+                      <div className="w-11 h-14 rounded-md overflow-hidden bg-brand-cream-dark flex items-center justify-center text-sm font-semibold text-brand-navy">
+                        {entry.product.image ? (
+                          <img
+                            src={entry.product.image}
+                            alt={entry.product.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          'L'
+                        )}
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="font-san text-sm font-medium text-brand-charcoal truncate">{entry.product.name}</p>
+                        <p className="font-san text-xs text-brand-muted">
+                          {entry.product.basePrice.toLocaleString('vi-VN')}đ / sản phẩm
+                        </p>
+                        {entry.product.category === 'CHARM' && (
+                          <button
+                            onClick={() => handleCustomizeSelected(entry)}
+                            className="mt-1 inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-brand-cream-dark text-xs font-san text-brand-charcoal hover:border-brand-amber"
+                          >
+                            <Sparkles size={12} />
+                            Customize
+                          </button>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => updateSelectionQuantity(entry.draftKey, entry.quantity - 1)}
+                        className="w-7 h-7 rounded-full border border-brand-cream-dark flex items-center justify-center text-brand-charcoal hover:border-brand-amber"
+                      >
+                        <Minus size={14} />
+                      </button>
+                      <span className="font-san text-sm font-semibold text-brand-charcoal min-w-6 text-center">{entry.quantity}</span>
+                      <button
+                        onClick={() => updateSelectionQuantity(entry.draftKey, entry.quantity + 1)}
+                        className="w-7 h-7 rounded-full border border-brand-cream-dark flex items-center justify-center text-brand-charcoal hover:border-brand-amber"
+                      >
+                        <Plus size={14} />
+                      </button>
+                      <button
+                        onClick={() => removeSelectedItem(entry.draftKey)}
+                        className="w-7 h-7 rounded-full border border-brand-cream-dark flex items-center justify-center text-brand-muted hover:text-red-500 hover:border-red-200"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-5 py-4 border-t border-brand-cream-dark flex items-center justify-end gap-3">
+              <button
+                onClick={() => setShowSelectionModal(false)}
+                className="px-4 py-2.5 rounded-xl border border-brand-cream-dark font-san text-sm text-brand-charcoal"
+              >
+                Đóng
+              </button>
+              <button
+                onClick={handleConfirmAddAll}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-navy text-white font-san text-sm font-medium hover:bg-brand-deep-blue"
+              >
+                <ShoppingBag size={14} />
+                Xác nhận thêm vào giỏ
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -8,6 +8,7 @@ import ExplorePage from './pages/ExplorePage';
 import CheckoutPage from './pages/CheckoutPage';
 import AccountPage from './pages/AccountPage';
 import NotFoundPage from './pages/NotFoundPage';
+import CustomizationPage from './pages/CustomizationPage';
 
 function AppContent() {
   // Capture UTM params on first load
@@ -18,6 +19,7 @@ function AppContent() {
       <Route path="/" element={<Layout />}>
         <Route index element={<HomePage />} />
         <Route path="san-pham" element={<ProductsPage />} />
+        <Route path="customize/:productId" element={<CustomizationPage />} />
         <Route path="kham-pha" element={<ExplorePage />} />
         <Route path="bai-viet" element={<NotFoundPage />} />
         <Route path="thanh-toan" element={<CheckoutPage />} />

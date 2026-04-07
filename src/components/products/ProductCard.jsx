@@ -1,33 +1,36 @@
-import { ShoppingBag, Eye } from 'lucide-react';
+import { useState } from 'react';
+import { Plus } from 'lucide-react';
 
-export default function ProductCard({ product, onClick }) {
+export default function ProductCard({ product, onAddClick, isSelected = false, selectedQuantity = 0 }) {
+  const [imageError, setImageError] = useState(false);
+
   return (
     <div
-      className="product-card bg-white rounded-2xl overflow-hidden cursor-pointer group"
-      onClick={onClick}
+      className={`product-card bg-white rounded-2xl overflow-hidden group border-2 transition-all h-full ${
+        isSelected ? 'border-brand-amber shadow-lg shadow-brand-amber/20 -translate-y-1' : 'border-transparent'
+      }`}
     >
       {/* Image */}
       <div className="relative aspect-[3/4] bg-brand-cream-dark overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-          onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.parentElement.innerHTML = `
-              <div class="flex flex-col items-center justify-center h-full p-4 text-center">
-                <div class="text-4xl mb-2">${
-                  product.category === 'CHARM'
-                    ? '📚'
-                    : product.category === 'BOOKMARK'
-                    ? '🔖'
-                    : '📓'
-                }</div>
-                <p class="font-san text-xs text-brand-muted">${product.name}</p>
-              </div>
-            `;
-          }}
-        />
+        {!imageError ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+            <div className="text-4xl mb-2">
+              {product.category === 'CHARM'
+                ? '📚'
+                : product.category === 'BOOKMARK'
+                ? '🔖'
+                : '📓'}
+            </div>
+            <p className="font-san text-xs text-brand-muted">{product.name}</p>
+          </div>
+        )}
 
         {/* Best seller badge */}
         {product.bestSeller && (
@@ -36,21 +39,24 @@ export default function ProductCard({ product, onClick }) {
           </div>
         )}
 
-        {/* Hover overlay */}
-        <div className="absolute inset-0 bg-brand-navy/0 group-hover:bg-brand-navy/20 transition-all duration-300 flex items-center justify-center">
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex gap-3">
-            <button className="bg-white/90 p-3 rounded-full hover:bg-brand-amber hover:text-white transition-colors">
-              <Eye size={16} />
-            </button>
-            <button className="bg-white/90 p-3 rounded-full hover:bg-brand-amber hover:text-white transition-colors">
-              <ShoppingBag size={16} />
-            </button>
+        {selectedQuantity > 0 && (
+          <div className="absolute top-3 right-3 min-w-7 h-7 px-2 bg-brand-navy text-white font-san text-xs font-bold rounded-full flex items-center justify-center shadow-lg">
+            {selectedQuantity}
           </div>
-        </div>
+        )}
+
+        <button
+          type="button"
+          onClick={onAddClick}
+          className="absolute bottom-3 right-3 w-10 h-10 rounded-full bg-white/95 border border-brand-cream-dark text-brand-charcoal flex items-center justify-center shadow-sm hover:bg-brand-amber hover:text-white hover:border-brand-amber transition-colors"
+          aria-label={`Thêm ${product.name}`}
+        >
+          <Plus size={18} />
+        </button>
       </div>
 
       {/* Info */}
-      <div className="p-4">
+      <div className="p-3 md:p-4">
         <h4 className="font-golan text-sm font-semibold text-brand-charcoal mb-1 truncate">
           {product.name}
         </h4>
