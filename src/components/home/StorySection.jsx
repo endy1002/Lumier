@@ -34,8 +34,9 @@ export default function StorySection() {
           </p>
 
           {/* The Storyteller badge */}
-          <div className="inline-block">
-            <p className="font-golan text-2xl md:text-3xl text-brand-gold italic">
+          <div className="w-full flex flex-col items-end mt-2">
+            <div className="w-44 md:w-60 h-[3px] bg-white/90 mb-3" />
+            <p className="font-golan text-3xl md:text-4xl text-white italic leading-none">
               The storyteller
             </p>
           </div>

@@ -73,7 +73,7 @@ export default function ChatbotWidget() {
           {/* Popup text */}
           <div className="relative bg-white rounded-2xl shadow-xl px-4 py-3 mr-2 max-w-[200px] animate-fade-in-up
                           after:content-[''] after:absolute after:top-[60%] after:-right-[7px] after:-translate-y-1/2 after:border-t-[8px] after:border-t-transparent after:border-b-[8px] after:border-b-transparent after:border-l-[8px] after:border-l-white">
-            <p className="font-san text-xs text-brand-charcoal pr-2">
+            <p className="font-san text-xl text-brand-charcoal pr-2">
               Tìm sách đúng gu với LumiAI
             </p>
             <button

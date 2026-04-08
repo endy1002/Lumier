@@ -7,8 +7,8 @@ export default function HomePage() {
   return (
     <div>
       <HeroSection />
-      <StorySection />
       <SpecsSection />
+      <StorySection />
       <BentoGrid />
     </div>
   );

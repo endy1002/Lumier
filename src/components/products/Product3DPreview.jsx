@@ -62,25 +62,27 @@ function BookcharmModel({
   const coverTexture = useTexture(coverImageUrl || fallbackCoverUrl || '/images/BookCover/01.png');
 
   useMemo(() => {
-    coverTexture.colorSpace = THREE.SRGBColorSpace;
-    coverTexture.flipY = false;
-    coverTexture.wrapS = THREE.ClampToEdgeWrapping;
-    coverTexture.wrapT = THREE.ClampToEdgeWrapping;
-    coverTexture.magFilter = THREE.LinearFilter;
-    coverTexture.minFilter = THREE.LinearMipmapLinearFilter;
-    coverTexture.generateMipmaps = true;
+    const configureTexture = (texture, { mirrorX = false, rotate180 = false } = {}) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.flipY = false;
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.LinearMipmapLinearFilter;
+      texture.generateMipmaps = true;
+      texture.center.set(0.5, 0.5);
+      texture.repeat.set(mirrorX ? -1 : 1, 1);
+      texture.rotation = rotate180 ? Math.PI : 0;
+      texture.anisotropy = 16;
+      texture.needsUpdate = true;
+    };
 
-    coverTexture.center.set(0.5, 0.5);
-    coverTexture.repeat.set(-1, 1);
-
-    coverTexture.rotation = Math.PI;
-    coverTexture.anisotropy = 16;
-    coverTexture.needsUpdate = true;
+    configureTexture(coverTexture, { mirrorX: true, rotate180: true });
   }, [coverTexture]);
 
-  const [modelCenter, coverOverlay, spineTextOverlay, spineFocusPoint] = useMemo(() => {
+  const [modelCenter, coverOverlay, backCoverOverlay, spineTextOverlay, spineFocusPoint] = useMemo(() => {
     if (!nodes || !nodes.CoverMesh) {
-      return [[0, 0, 0], null, null, [0, 0, 0]];
+      return [[0, 0, 0], null, null, null, [0, 0, 0]];
     }
 
     nodes.CoverMesh.geometry.computeBoundingBox();
@@ -99,8 +101,14 @@ function BookcharmModel({
       size: [Math.max(coverSize.x * 0.992, 0.001), Math.max(coverSize.y * 0.992, 0.001)],
     };
 
+    const backCover = {
+      position: [center.x, center.y, coverBox.min.z - 0.0012],
+      rotation: [0, Math.PI, 0],
+      size: [Math.max(coverSize.x * 0.992, 0.001), Math.max(coverSize.y * 0.992, 0.001)],
+    };
+
     if (!nodes.SpineMesh?.geometry) {
-      return [[center.x, center.y, center.z], frontCover, null, [center.x, center.y, center.z]];
+      return [[center.x, center.y, center.z], frontCover, backCover, null, [center.x, center.y, center.z]];
     }
 
     nodes.SpineMesh.geometry.computeBoundingBox();
@@ -127,7 +135,7 @@ function BookcharmModel({
       coverBox.max.z + 0.001,
     ];
 
-    return [[center.x, center.y, center.z], frontCover, textOverlay, focusPoint];
+    return [[center.x, center.y, center.z], frontCover, backCover, textOverlay, focusPoint];
   }, [nodes]);
 
   // Notify parent of the book's center so camera can target it
@@ -253,6 +261,18 @@ function BookcharmModel({
             side={THREE.FrontSide}
             polygonOffset
             polygonOffsetFactor={-3}
+          />
+        </mesh>
+      )}
+
+      {backCoverOverlay && (
+        <mesh position={backCoverOverlay.position} rotation={backCoverOverlay.rotation}>
+          <planeGeometry args={backCoverOverlay.size} />
+          <meshBasicMaterial
+            color="#A67B5B"
+            side={THREE.FrontSide}
+            polygonOffset
+            polygonOffsetFactor={-2.5}
           />
         </mesh>
       )}

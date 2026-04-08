@@ -24,7 +24,7 @@ export const PRICING = {
 
 export const CHARM_TYPES = [
   { id: 'silver', label: 'Charm Bạc', color: '#C0C0C0' },
-  { id: 'gold', label: 'Charm Đồng', color: '#B87333' },
+  { id: 'gold', label: 'Charm Vàng', color: '#FFD700' },
 ];
 
 export const SPINE_COLORS = [

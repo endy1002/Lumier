@@ -24,7 +24,7 @@ export default function AudiobookSection() {
         <h2 className="font-golan text-3xl font-bold text-white mb-3 italic">
           Sách Nói
         </h2>
-        <p className="font-san text-sm text-white/70 max-w-md mx-auto leading-relaxed">
+        <p className="font-san text-base text-white/75 max-w-xl mx-auto leading-relaxed">
           Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng
           nghe những cảm xúc của bản thân
         </p>
@@ -35,8 +35,8 @@ export default function AudiobookSection() {
         <div className="bg-white rounded-2xl p-6 mb-8 shadow-sm">
           <div className="flex items-center gap-2 mb-4">
             <Lock size={18} className="text-brand-amber" />
-            <h3 className="font-san text-sm font-semibold text-brand-charcoal">
-              Nhập code từ bookcharm để truy cập kho thư viện sách nói đặc quyền
+            <h3 className="font-san text-base font-semibold text-brand-charcoal">
+              Nhập code từ bookcharm để truy cập vào kho thư viện sách nói đặc quyền
             </h3>
           </div>
 
@@ -60,11 +60,11 @@ export default function AudiobookSection() {
           </form>
 
           {error && (
-            <p className="font-san text-xs text-red-500 mt-2">{error}</p>
+            <p className="font-san text-sm text-red-500 mt-2">{error}</p>
           )}
 
-          <p className="font-san text-xs text-brand-muted mt-3">
-            💡 Mã code được đính kèm trong sản phẩm Bookcharm khi bạn nhận hàng
+          <p className="font-san text-sm text-brand-muted mt-3 leading-relaxed">
+            Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng nghe những cảm xúc của bản thân
           </p>
         </div>
       ) : (
@@ -111,24 +111,24 @@ export default function AudiobookSection() {
                 <h4 className="font-golan text-base font-semibold text-brand-charcoal">
                   {book.title}
                 </h4>
-                <p className="font-san text-xs text-brand-muted mt-0.5">
+                <p className="font-san text-sm text-brand-muted mt-0.5">
                   {book.author}
                 </p>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center gap-1 text-brand-muted">
                     <Clock size={12} />
-                    <span className="font-san text-xs">{book.duration}</span>
+                    <span className="font-san text-sm">{book.duration}</span>
                   </div>
-                  <span className="font-san text-xs text-brand-muted">
+                  <span className="font-san text-sm text-brand-muted">
                     Đọc: {book.narrator}
                   </span>
                 </div>
-                <p className="font-san text-xs text-brand-muted mt-2 line-clamp-2">
+                <p className="font-san text-sm text-brand-muted mt-2 line-clamp-2">
                   {book.summary}
                 </p>
 
                 {isUnlocked && (
-                  <button className="mt-3 flex items-center gap-1.5 text-brand-navy font-san text-xs font-medium hover:text-brand-amber transition-colors">
+                  <button className="mt-3 flex items-center gap-1.5 text-brand-navy font-san text-sm font-medium hover:text-brand-amber transition-colors">
                     <Play size={14} />
                     Nghe ngay
                   </button>
