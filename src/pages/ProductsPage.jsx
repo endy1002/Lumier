@@ -86,6 +86,22 @@ export default function ProductsPage() {
     [selectedItems]
   );
 
+  const charmCustomizationSummary = useMemo(() => {
+    return selectedItems.reduce(
+      (acc, item) => {
+        if (item?.product?.category !== 'CHARM') return acc;
+
+        const qty = Math.max(1, Number(item?.quantity) || 1);
+        acc.total += qty;
+        if (item.customization) {
+          acc.customized += qty;
+        }
+        return acc;
+      },
+      { total: 0, customized: 0 }
+    );
+  }, [selectedItems]);
+
   const addItemToSelection = (product, customization = null, replaceDraftKey = null) => {
     setSelectedItems((prev) => {
       if (replaceDraftKey) {
@@ -335,6 +351,11 @@ export default function ProductsPage() {
               <p className="font-golan text-lg font-bold text-brand-charcoal">
                 {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
               </p>
+              {charmCustomizationSummary.total > 0 && (
+                <p className="font-san text-xs text-brand-muted mt-0.5">
+                  Charm đã customize: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -370,6 +391,11 @@ export default function ProductsPage() {
                 <p className="font-golan text-lg font-bold text-brand-charcoal">
                   {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
                 </p>
+                {charmCustomizationSummary.total > 0 && (
+                  <p className="font-san text-xs text-brand-muted mt-0.5">
+                    Charm đã customize: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
+                  </p>
+                )}
               </div>
               <button
                 onClick={() => setShowSelectionModal(false)}
@@ -404,6 +430,17 @@ export default function ProductsPage() {
                         <p className="font-san text-xs text-brand-muted">
                           {entry.product.basePrice.toLocaleString('vi-VN')}đ / sản phẩm
                         </p>
+                        {entry.product.category === 'CHARM' && (
+                          <span
+                            className={`mt-1 inline-flex items-center px-2 py-1 rounded-full text-[11px] font-san ${
+                              entry.customization
+                                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                : 'bg-amber-50 text-amber-700 border border-amber-200'
+                            }`}
+                          >
+                            {entry.customization ? 'Đã customize' : 'Chưa customize'}
+                          </span>
+                        )}
                         {entry.product.category === 'CHARM' && (
                           <button
                             onClick={() => handleCustomizeSelected(entry)}

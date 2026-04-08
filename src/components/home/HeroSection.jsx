@@ -5,9 +5,10 @@ import { BRAND } from '../../config/constants';
 export default function HeroSection() {
   return (
     <section className="relative overflow-hidden bg-white">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_42%_46%,_rgba(242,169,0,0.22)_0%,_rgba(242,169,0,0.12)_28%,_rgba(255,255,255,1)_66%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_42%_46%,_rgba(242,169,0,0.16)_0%,_rgba(242,169,0,0.08)_26%,_rgba(255,255,255,1)_62%)]" />
+      <div className="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-transparent to-white/72" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left: Bookcharm Image with floating animation */}
           <div className="relative flex justify-center lg:justify-start order-1 lg:order-1">
@@ -39,11 +40,11 @@ export default function HeroSection() {
             <h1 className="font-golan text-5xl md:text-6xl lg:text-7xl font-bold text-brand-navy leading-tight mb-2 tracking-wide">
               LUMIER
             </h1>
-            <h2 className="font-heading text-2xl md:text-3xl text-brand-charcoal italic mb-6">
+            <h2 className="font-heading text-2xl md:text-3xl text-brand-charcoal italic mb-6 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
               "Chạm tri thức, rực bản nguyên"
             </h2>
 
-            <p className="font-san text-base md:text-[17px] text-brand-muted leading-relaxed mb-8 max-w-xl">
+            <p className="font-san text-base md:text-[17px] text-brand-charcoal/78 leading-relaxed mb-8 max-w-xl">
               Vượt xa một món phụ kiện trang trí thông thường, Book Charm là sự giao thoa giữa thẩm mỹ cá nhân và giá trị tri thức. Với kích thước vừa vặn trong lòng bàn tay, món đồ nhỏ nhắn này không chỉ tạo điểm nhấn phong cách cho chiếc túi xách, mà còn là một “tín hiệu ngầm” giúp bạn kết nối với những tâm hồn đồng điệu. Đó là cách đầy tinh tế để bạn khẳng định gu đọc sách và tự hào chia sẻ về những tác phẩm mình tâm đắc.
             </p>
 

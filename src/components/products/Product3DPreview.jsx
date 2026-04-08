@@ -26,7 +26,7 @@ class ErrorBoundary extends Component {
       return (
         <mesh>
           <boxGeometry args={[2, 3, 0.5]} />
-          <meshStandardMaterial color="#F2A900" />
+          <meshBasicMaterial color="#F2A900" />
         </mesh>
       );
     }
@@ -230,7 +230,7 @@ function BookcharmModel({
     return (
       <mesh>
         <boxGeometry args={[2, 3, 0.5]} />
-        <meshStandardMaterial map={coverTexture} />
+        <meshBasicMaterial map={coverTexture} />
       </mesh>
     );
   }
@@ -240,21 +240,19 @@ function BookcharmModel({
     <group ref={group} dispose={null} position={[0, 0, 0]} scale={[1.419, 1.419, 1.419]}>
       {nodes.CoverMesh && (
         <mesh geometry={nodes.CoverMesh.geometry}>
-          <meshStandardMaterial color="#1a1a1a" roughness={0.62} metalness={0.04} />
+          <meshBasicMaterial color="#1a1a1a" />
         </mesh>
       )}
 
       {coverOverlay && (
         <mesh position={coverOverlay.position} rotation={coverOverlay.rotation}>
           <planeGeometry args={coverOverlay.size} />
-          <meshStandardMaterial
+          <meshBasicMaterial
             map={coverTexture}
             transparent
             side={THREE.FrontSide}
             polygonOffset
             polygonOffsetFactor={-3}
-            roughness={0.58}
-            metalness={0.04}
           />
         </mesh>
       )}
@@ -272,7 +270,7 @@ function BookcharmModel({
       {spineTextOverlay && engravedText?.trim() && (
   <mesh position={spineTextOverlay.position} rotation={spineTextOverlay.rotation}>
     <planeGeometry args={spineTextOverlay.size} />
-    <meshStandardMaterial
+    <meshBasicMaterial
       map={engravingOverlayTexture}
       transparent={true}
       alphaTest={0.1} // Tăng lên một chút để lọc bỏ vùng thừa tốt hơn
@@ -283,15 +281,13 @@ function BookcharmModel({
       polygonOffsetFactor={-1} 
       polygonOffsetUnits={-1}
       depthWrite={false} // Không ghi vào các mesh khác.
-      roughness={0.45}
-      metalness={0.06}
     />
   </mesh>
 )}
 
       {nodes.PaperMesh && (
         <mesh geometry={nodes.PaperMesh.geometry}>
-          <meshStandardMaterial color="#FFF9E6" roughness={0.9} />
+          <meshBasicMaterial color="#FFF9E6" />
         </mesh>
       )}
 
@@ -378,12 +374,12 @@ export default function Product3DPreview({
     <div className="w-full h-full min-h-[400px] lg:min-h-screen bg-brand-cream-dark/20 relative flex items-center justify-center">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] lg:w-[500px] lg:h-[500px] bg-white/50 rounded-full blur-3xl" />
 
-      <Canvas shadows camera={{ position: [0, 0, 3.5], fov: 35 }} className="w-full h-full absolute inset-0 z-10 transition-opacity duration-1000">
-        <ambientLight intensity={0.78} />
-        <hemisphereLight args={['#fff6de', '#efe3c3', 0.42]} />
-        <directionalLight position={[2.8, 2.4, 2.6]} intensity={0.56} />
-        <directionalLight position={[-2.8, 2.0, -2.6]} intensity={0.44} />
-        <Environment preset="studio" intensity={0.2} />
+      <Canvas camera={{ position: [0, 0, 3.5], fov: 35 }} className="w-full h-full absolute inset-0 z-10 transition-opacity duration-1000">
+        <ambientLight intensity={0.5} />
+        <hemisphereLight args={['#fff6de', '#efe3c3', 0.25]} />
+        <directionalLight position={[2.8, 2.4, 2.6]} intensity={0.3} />
+        <directionalLight position={[-2.8, 2.0, -2.6]} intensity={0.26} />
+        <Environment preset="studio" intensity={0.12} />
 
         <ErrorBoundary>
           <React.Suspense fallback={<Loader />}>
