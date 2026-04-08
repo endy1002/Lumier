@@ -5,7 +5,7 @@ export const PRODUCTS = [
   // === BOOKCHARM (Ngăn 1 & 2) ===
   {
     id: 'bc-001',
-    name: 'The Golden Book Charm',
+    name: 'Trên đồi mở mắt và mơ',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Mỗi cuốn sách là một tác phẩm nghệ thuật thủ công, được đúc kết từ sự vàng ròng và niềm đam mê với tri thức. Chúng tôi mang đến sự sang trọng tìm ẩn cho trang sách bạn đã mở, biến trải nghiệm đọc thành một hành trình thức thường xúc đầy cảm hứng.',
@@ -17,7 +17,7 @@ export const PRODUCTS = [
   },
   {
     id: 'bc-002',
-    name: 'The Classic Rose',
+    name: 'The Other Side',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Bookcharm hình hoa hồng cổ điển, mang phong cách vintage thanh lịch.',
@@ -29,7 +29,7 @@ export const PRODUCTS = [
   },
   {
     id: 'bc-003',
-    name: 'The Midnight Library',
+    name: 'Takahashi',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Bookcharm phiên bản thư viện đêm, thiết kế tối giản với tông xanh navy.',
@@ -41,7 +41,7 @@ export const PRODUCTS = [
   },
   {
     id: 'bc-004',
-    name: 'The Aurelian Archive',
+    name: 'Ngọn đèn không tắt',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Bookcharm lấy cảm hứng từ kho tàng tri thức phương Đông.',
@@ -53,7 +53,7 @@ export const PRODUCTS = [
   },
   {
     id: 'bc-005',
-    name: 'Victoria Library',
+    name: 'Cho tôi xin một vé đi tuổi thơ',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Bookcharm phong cách thư viện Victoria, sang trọng và quý phái.',
@@ -65,7 +65,7 @@ export const PRODUCTS = [
   },
   {
     id: 'bc-006',
-    name: 'The Wanderer Tale',
+    name: 'Trốn lên mái nhà để khóc',
     category: 'CHARM',
     basePrice: 150000,
     description: 'Bookcharm dành cho những tâm hồn yêu du lịch và khám phá.',
