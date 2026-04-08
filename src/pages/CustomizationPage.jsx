@@ -42,6 +42,7 @@ export default function CustomizationPage() {
   const [engravedText, setEngravedText] = useState(initialPayload?.engravedText || '');
   const [spineColor, setSpineColor] = useState(initialPayload?.spineColor || SPINE_COLORS[0].id);
   const [showFinalizePopup, setShowFinalizePopup] = useState(false);
+  const [focusSpinePreview, setFocusSpinePreview] = useState(false);
   
   const [customCover, setCustomCover] = useState(initialPayload?.customCover ? { mocked: true } : null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState(initialPayload?.customCover || null);
@@ -89,6 +90,8 @@ export default function CustomizationPage() {
     };
 
     if (returnToProducts) {
+      let savedToDraft = false;
+
       try {
         const raw = window.sessionStorage.getItem(SELECTION_DRAFT_KEY);
         const currentDraft = raw ? JSON.parse(raw) : [];
@@ -134,11 +137,21 @@ export default function CustomizationPage() {
 
         window.sessionStorage.setItem(SELECTION_DRAFT_KEY, JSON.stringify(nextDraft));
         window.sessionStorage.removeItem(CUSTOMIZE_PAYLOAD_KEY);
+        savedToDraft = true;
       } catch {
-        // If session storage fails, fallback to cart flow below.
+        savedToDraft = false;
       }
 
-      showToast(`${product.name} (đã tùy chỉnh) đã lưu vào mục Đang chọn.`);
+      if (savedToDraft) {
+        showToast(`${product.name} (đã tùy chỉnh) đã lưu vào mục Đang chọn.`);
+        setShowFinalizePopup(false);
+        navigate('/san-pham');
+        return;
+      }
+
+      // Fallback: if draft save fails unexpectedly, keep user action by adding to cart.
+      addItem(product, customization);
+      showToast(`${product.name} (đã tùy chỉnh) đã được thêm vào giỏ hàng!`);
       setShowFinalizePopup(false);
       navigate('/san-pham');
       return;
@@ -177,6 +190,7 @@ export default function CustomizationPage() {
               engravedText={engravedText}
               coverPreviewUrl={coverPreviewUrl}
               fallbackCoverUrl={product.image}
+              focusSpine={focusSpinePreview}
            />
         </div>
 
@@ -189,6 +203,7 @@ export default function CustomizationPage() {
               spineColor={spineColor} setSpineColor={setSpineColor}
               handleCoverUpload={handleCoverUpload}
               totalPrice={totalPrice}
+                onEngravingFocusChange={setFocusSpinePreview}
               onConfirm={handleConfirm}
               onCancel={handleCancel}
            />

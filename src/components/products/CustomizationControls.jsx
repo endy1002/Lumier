@@ -9,7 +9,8 @@ export default function CustomizationControls({
   handleCoverUpload,
   totalPrice,
   onCancel,
-  onConfirm
+  onConfirm,
+  onEngravingFocusChange,
 }) {
   const wordCount = engravedText.trim().split(/\s+/).filter(Boolean).length;
 
@@ -121,6 +122,8 @@ export default function CustomizationControls({
             type="text"
             value={engravedText}
             onChange={(e) => setEngravedText(e.target.value)}
+            onFocus={() => onEngravingFocusChange?.(true)}
+            onBlur={() => onEngravingFocusChange?.(false)}
             placeholder="Nhập chữ cần khắc (VD: LUMIER, ENDY...)"
             className={`w-full px-4 py-3 border-2 rounded-xl font-san text-sm transition-colors ${
               wordCount > 10 ? 'border-red-500 bg-red-50 focus:border-red-500' : 'border-brand-cream-dark focus:border-brand-amber'

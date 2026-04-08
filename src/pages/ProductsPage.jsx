@@ -45,6 +45,7 @@ export default function ProductsPage() {
   const [showCustomizePopup, setShowCustomizePopup] = useState(false);
   const [showSelectionModal, setShowSelectionModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
 
   // Check if redirected from search with no results
   const shouldCustomize = searchParams.get('customize') === 'true';
@@ -53,11 +54,13 @@ export default function ProductsPage() {
   useEffect(() => {
     const draft = readDraftSelection();
     setSelectedItems(draft);
+    setHasHydratedDraft(true);
   }, []);
 
   useEffect(() => {
+    if (!hasHydratedDraft) return;
     window.sessionStorage.setItem(SELECTION_DRAFT_KEY, JSON.stringify(selectedItems));
-  }, [selectedItems]);
+  }, [selectedItems, hasHydratedDraft]);
 
   const selectedQuantities = useMemo(
     () =>

@@ -4,7 +4,9 @@ import { BRAND } from '../../config/constants';
 
 export default function HeroSection() {
   return (
-    <section className="gradient-hero relative overflow-hidden">
+    <section className="relative overflow-hidden bg-white">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_42%_46%,_rgba(242,169,0,0.22)_0%,_rgba(242,169,0,0.12)_28%,_rgba(255,255,255,1)_66%)]" />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           {/* Left: Bookcharm Image with floating animation */}
