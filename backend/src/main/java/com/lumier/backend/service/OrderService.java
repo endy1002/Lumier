@@ -12,6 +12,7 @@ import com.lumier.backend.repository.CustomerOrderRepository;
 import com.lumier.backend.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,9 +51,11 @@ public class OrderService {
     BigDecimal totalAmount = BigDecimal.ZERO;
 
     for (CheckoutRequest.CheckoutItemRequest itemRequest : request.getItems()) {
-      Product product = productRepository.findById(itemRequest.getProductId())
+      Long productId = Objects.requireNonNull(itemRequest.getProductId());
+
+      Product product = productRepository.findById(productId)
         .filter(Product::isAvailable)
-        .orElseThrow(() -> new EntityNotFoundException("Product not found or unavailable: " + itemRequest.getProductId()));
+        .orElseThrow(() -> new EntityNotFoundException("Product not found or unavailable: " + productId));
 
       BigDecimal itemSubtotal = pricingService.calculateItemSubtotal(
         product,

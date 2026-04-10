@@ -1,18 +1,35 @@
 # Dependencies
 node_modules/
+backend/node_modules/
 .pnp
 .pnp.js
 
 # Build output
 dist/
 build/
+backend/target/
+*.class
 
 # Environment variables
 .env
+.env.*
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+backend/.env.*
+
+# Secrets and keys
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.keystore
+*.asc
+secrets/
+certs/
 
 # Editor & IDE
 .vscode/

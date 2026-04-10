@@ -17,7 +17,7 @@ export const NAV_LINKS = [
 ];
 
 export const PRICING = {
-  BASE_CHARM: 150000,       // Sách có sẵn
+  BASE_CHARM: 100000,       // Sách có sẵn
   CUSTOM_COVER: 50000,      // Tự tay lựa/tải ảnh (+50k = 200k tổng)
   CUSTOMIZE_ADDON: 50000,   // Mỗi hình thức customize khác (chain, khắc tên)
 };
@@ -47,6 +47,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:80
 export const API_ENDPOINTS = {
   products: `${API_BASE_URL}/products`,
   orders: `${API_BASE_URL}/orders`,
+  auth: `${API_BASE_URL}/auth`,
   users: `${API_BASE_URL}/users`,
   audiobooks: `${API_BASE_URL}/audiobooks`,
   leads: `${API_BASE_URL}/leads`,

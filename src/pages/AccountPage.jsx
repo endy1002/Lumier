@@ -14,8 +14,18 @@ export default function AccountPage() {
   const { user, isAuthenticated, isLoading, loginWithGoogle, logout, getOrderHistory } =
     useAuth();
   const [tab, setTab] = useState('orders');
+  const [loginError, setLoginError] = useState('');
 
   const orders = getOrderHistory();
+
+  const handleGoogleLogin = async () => {
+    setLoginError('');
+    try {
+      await loginWithGoogle();
+    } catch (error) {
+      setLoginError(error?.message || 'Dang nhap Google that bai');
+    }
+  };
 
   // === Login Screen ===
   if (!isAuthenticated) {
@@ -33,7 +43,7 @@ export default function AccountPage() {
           </p>
 
           <button
-            onClick={loginWithGoogle}
+            onClick={handleGoogleLogin}
             disabled={isLoading}
             className="w-full flex items-center justify-center gap-3 py-3.5 border-2 border-brand-cream-dark rounded-xl font-san text-sm font-medium hover:border-brand-amber hover:bg-brand-amber/5 transition-all disabled:opacity-50"
           >
@@ -63,6 +73,10 @@ export default function AccountPage() {
               </>
             )}
           </button>
+
+          {loginError && (
+            <p className="font-san text-xs text-red-500 mt-3">{loginError}</p>
+          )}
         </div>
       </div>
     );

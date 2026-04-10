@@ -1,9 +1,32 @@
 import { useState, useEffect, useCallback } from 'react';
+import api from '../services/api';
 
-/**
- * Hook for Google OAuth2 authentication (mock for MVP).
- * Will be replaced with real Google SSO when backend is ready.
- */
+const GOOGLE_SCRIPT_ID = 'google-identity-services';
+
+function loadGoogleIdentityScript() {
+  if (window.google?.accounts?.id) {
+    return Promise.resolve();
+  }
+
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById(GOOGLE_SCRIPT_ID);
+    if (existing) {
+      existing.addEventListener('load', () => resolve(), { once: true });
+      existing.addEventListener('error', () => reject(new Error('Failed to load Google script')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = GOOGLE_SCRIPT_ID;
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Failed to load Google script'));
+    document.head.appendChild(script);
+  });
+}
+
 export function useAuth() {
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem('lumier_user');
@@ -22,20 +45,51 @@ export function useAuth() {
 
   const loginWithGoogle = useCallback(async () => {
     setIsLoading(true);
-    // Mock Google OAuth - simulate delay
-    await new Promise((resolve) => setTimeout(resolve, 1200));
+    const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
-    const mockUser = {
-      id: 'user_' + Date.now(),
-      email: 'user@gmail.com',
-      name: 'Người dùng LUMIER',
-      avatar: null,
-      googleId: 'google_mock_id',
-    };
+    if (!googleClientId) {
+      setIsLoading(false);
+      throw new Error('Missing VITE_GOOGLE_CLIENT_ID');
+    }
 
-    setUser(mockUser);
-    setIsLoading(false);
-    return mockUser;
+    await loadGoogleIdentityScript();
+
+    try {
+      const credential = await new Promise((resolve, reject) => {
+        window.google.accounts.id.initialize({
+          client_id: googleClientId,
+          callback: (response) => {
+            if (!response?.credential) {
+              reject(new Error('Google credential is missing'));
+              return;
+            }
+            resolve(response.credential);
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true,
+        });
+
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            reject(new Error('Google sign-in prompt was not displayed'));
+          }
+        });
+      });
+
+      const { data } = await api.post('/auth/google', { idToken: credential });
+      const authenticatedUser = {
+        id: data.user.googleId,
+        email: data.user.email,
+        name: data.user.name || data.user.email,
+        avatar: data.user.picture || null,
+        googleId: data.user.googleId,
+      };
+
+      setUser(authenticatedUser);
+      return authenticatedUser;
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
   const logout = useCallback(() => {

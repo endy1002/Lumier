@@ -6,7 +6,7 @@ export default function ProductCard({ product, onAddClick, isSelected = false, s
 
   return (
     <div
-      className={`product-card bg-white rounded-2xl overflow-hidden group border-2 transition-all h-full ${
+      className={`product-card bg-white rounded-2xl overflow-hidden cursor-pointer group border-2 transition-all ${
         isSelected ? 'border-brand-amber shadow-lg shadow-brand-amber/20 -translate-y-1' : 'border-transparent'
       }`}
     >
@@ -56,7 +56,7 @@ export default function ProductCard({ product, onAddClick, isSelected = false, s
       </div>
 
       {/* Info */}
-      <div className="p-3 md:p-4">
+      <div className="p-4">
         <h4 className="font-golan text-sm font-semibold text-brand-charcoal mb-1 truncate">
           {product.name}
         </h4>
