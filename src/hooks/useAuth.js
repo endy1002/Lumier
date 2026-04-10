@@ -2,6 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const GOOGLE_SCRIPT_ID = 'google-identity-services';
+const AUTH_EVENT = 'lumier-auth-changed';
+const USER_STORAGE_KEY = 'lumier_user';
+const ORDER_STORAGE_KEY = 'lumier_orders';
+
+function readStoredUser() {
+  const stored = localStorage.getItem(USER_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : null;
+}
+
+function readAllOrders() {
+  const stored = localStorage.getItem(ORDER_STORAGE_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+
+function emitAuthChanged() {
+  window.dispatchEvent(new Event(AUTH_EVENT));
+}
 
 function loadGoogleIdentityScript() {
   if (window.google?.accounts?.id) {
@@ -28,20 +45,23 @@ function loadGoogleIdentityScript() {
 }
 
 export function useAuth() {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem('lumier_user');
-    return stored ? JSON.parse(stored) : null;
-  });
+  const [user, setUser] = useState(() => readStoredUser());
 
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('lumier_user', JSON.stringify(user));
-    } else {
-      localStorage.removeItem('lumier_user');
-    }
-  }, [user]);
+    const syncUser = () => {
+      setUser(readStoredUser());
+    };
+
+    window.addEventListener('storage', syncUser);
+    window.addEventListener(AUTH_EVENT, syncUser);
+
+    return () => {
+      window.removeEventListener('storage', syncUser);
+      window.removeEventListener(AUTH_EVENT, syncUser);
+    };
+  }, []);
 
   const loginWithGoogle = useCallback(async () => {
     setIsLoading(true);
@@ -88,7 +108,9 @@ export function useAuth() {
         marketingOptIn: Boolean(data.user.marketingOptIn),
       };
 
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(authenticatedUser));
       setUser(authenticatedUser);
+      emitAuthChanged();
       return authenticatedUser;
     } finally {
       setIsLoading(false);
@@ -96,34 +118,47 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => {
+    localStorage.removeItem(USER_STORAGE_KEY);
     setUser(null);
+    emitAuthChanged();
   }, []);
 
   const updateUserProfile = useCallback((patch) => {
-    setUser((current) => (current ? { ...current, ...patch } : current));
+    setUser((current) => {
+      if (!current) {
+        return current;
+      }
+
+      const updated = { ...current, ...patch };
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updated));
+      emitAuthChanged();
+      return updated;
+    });
   }, []);
 
   const getOrderHistory = useCallback(() => {
-    // Mock order history
-    const stored = localStorage.getItem('lumier_orders');
-    return stored ? JSON.parse(stored) : [];
-  }, []);
+    if (!user?.email) {
+      return [];
+    }
+
+    return readAllOrders().filter((order) => order.userEmail === user.email);
+  }, [user]);
 
   const saveOrder = useCallback(
     (order) => {
-      const orders = getOrderHistory();
+      const orders = readAllOrders();
       const newOrder = {
         ...order,
-        id: 'ORD-' + Date.now(),
+        id: order.id || 'ORD-' + Date.now(),
         date: new Date().toISOString(),
-        status: 'pending',
+        status: order.status || 'pending',
         userEmail: user?.email || order.email,
       };
       orders.unshift(newOrder);
-      localStorage.setItem('lumier_orders', JSON.stringify(orders));
+      localStorage.setItem(ORDER_STORAGE_KEY, JSON.stringify(orders));
       return newOrder;
     },
-    [user, getOrderHistory]
+    [user]
   );
 
   return {

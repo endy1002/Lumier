@@ -121,7 +121,7 @@ export default function CheckoutPage() {
       setOrderPlaced(true);
       clearCart();
     } catch (error) {
-      const message = error?.response?.data?.message || error?.message || 'Khong the luu don hang. Vui long thu lai.';
+      const message = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Khong the luu don hang. Vui long thu lai.';
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
