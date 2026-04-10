@@ -4,7 +4,7 @@ import { ArrowLeft, CreditCard, Truck, QrCode, CheckCircle } from 'lucide-react'
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../hooks/useAuth';
 import { useUTM } from '../hooks/useUTM';
-import { PAYMENT_METHODS } from '../config/constants';
+import { PAYMENT_METHODS, SPINE_COLORS } from '../config/constants';
 import api from '../services/api';
 
 export default function CheckoutPage() {
@@ -27,6 +27,75 @@ export default function CheckoutPage() {
   const [errors, setErrors] = useState({});
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const normalizeName = (value) =>
+    (value || '')
+      .toLowerCase()
+      .replace(/đ/g, 'd')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const resolveBackendProductId = async (item, backendProductsByName) => {
+    if (typeof item.id === 'number' && Number.isFinite(item.id)) {
+      return item.id;
+    }
+
+    if (typeof item.id === 'string' && /^\d+$/.test(item.id)) {
+      return Number(item.id);
+    }
+
+    const lookupKey = normalizeName(item.name);
+    const backendId = backendProductsByName.get(lookupKey);
+    if (backendId) {
+      return backendId;
+    }
+
+    throw new Error(`San pham "${item.name}" chua dong bo voi backend. Vui long tai lai trang san pham.`);
+  };
+
+  const mapCustomizationForBackend = (customization) => {
+    if (!customization) {
+      return null;
+    }
+
+    const hardwareTypeRaw = customization.hardwareType || customization.charmType || null;
+    const hardwareType =
+      typeof hardwareTypeRaw === 'string' ? hardwareTypeRaw.toUpperCase() : null;
+
+    const spineColorHex =
+      customization.spineColorHex
+      || SPINE_COLORS.find((item) => item.id === customization.spineColor)?.hex
+      || customization.spineColor
+      || null;
+
+    const uploadedCoverUrl =
+      customization.uploadedCoverUrl
+      || customization.customCover
+      || null;
+
+    const mapped = {
+      uploadedCoverUrl,
+      spineColorHex,
+      engravedText: customization.engravedText || null,
+      hardwareType,
+      hasExtraChain:
+        customization.hasExtraChain != null
+          ? Boolean(customization.hasExtraChain)
+          : Boolean(customization.chainType),
+    };
+
+    const hasAnyValue =
+      Boolean(mapped.uploadedCoverUrl)
+      || Boolean(mapped.spineColorHex)
+      || Boolean(mapped.engravedText)
+      || Boolean(mapped.hardwareType)
+      || mapped.hasExtraChain;
+
+    return hasAnyValue ? mapped : null;
+  };
 
   useEffect(() => {
     if (!user) {
@@ -52,7 +121,7 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!user?.googleId) newErrors.auth = 'Vui lòng đăng nhập trước khi thanh toán';
+    if (!(user?.googleId || user?.id)) newErrors.auth = 'Vui lòng đăng nhập trước khi thanh toán';
     if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại';
     else if (!/^[0-9]{9,11}$/.test(formData.phone.replace(/\s/g, '')))
       newErrors.phone = 'Số điện thoại không hợp lệ';
@@ -71,8 +140,23 @@ export default function CheckoutPage() {
 
     try {
       const utmData = getUTMData() || {};
+      const { data: backendProducts } = await api.get('/products');
+      const backendProductsByName = new Map(
+        (backendProducts || []).map((product) => [
+          normalizeName(product.name),
+          product.id,
+        ])
+      );
+
+      const normalizedItems = await Promise.all(
+        items.map(async (item) => ({
+          item,
+          productId: await resolveBackendProductId(item, backendProductsByName),
+        }))
+      );
+
       const payload = {
-        googleId: user.googleId,
+        googleId: user.googleId || user.id,
         customerName: formData.name,
         customerPhone: formData.phone,
         shippingAddress: formData.address,
@@ -81,18 +165,10 @@ export default function CheckoutPage() {
           utmMedium: utmData.utmMedium || null,
           utmCampaign: utmData.utmCampaign || null,
         },
-        items: items.map((item) => ({
-          productId: item.id,
+        items: normalizedItems.map(({ item, productId }) => ({
+          productId,
           quantity: item.quantity,
-          customization: item.customization
-            ? {
-                uploadedCoverUrl: item.customization.uploadedCoverUrl || null,
-                spineColorHex: item.customization.spineColorHex || null,
-                engravedText: item.customization.engravedText || null,
-                hardwareType: item.customization.hardwareType || null,
-                hasExtraChain: Boolean(item.customization.hasExtraChain),
-              }
-            : null,
+          customization: mapCustomizationForBackend(item.customization),
         })),
       };
 

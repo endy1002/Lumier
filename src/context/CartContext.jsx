@@ -1,7 +1,9 @@
-import { createContext, useContext, useReducer, useCallback } from 'react';
+import { createContext, useContext, useReducer, useCallback, useEffect } from 'react';
 import { PRICING } from '../config/constants';
 
 const CartContext = createContext(null);
+const AUTH_EVENT = 'lumier-auth-changed';
+const USER_STORAGE_KEY = 'lumier_user';
 
 // ===== Cart Actions =====
 const ACTIONS = {
@@ -118,6 +120,23 @@ const initialState = {
 // ===== Cart Provider =====
 export function CartProvider({ children }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
+
+  useEffect(() => {
+    const syncCartWithAuth = () => {
+      const hasUser = Boolean(localStorage.getItem(USER_STORAGE_KEY));
+      if (!hasUser) {
+        dispatch({ type: ACTIONS.CLEAR_CART });
+      }
+    };
+
+    window.addEventListener('storage', syncCartWithAuth);
+    window.addEventListener(AUTH_EVENT, syncCartWithAuth);
+
+    return () => {
+      window.removeEventListener('storage', syncCartWithAuth);
+      window.removeEventListener(AUTH_EVENT, syncCartWithAuth);
+    };
+  }, []);
 
   const addItem = useCallback((product, customization = null) => {
     dispatch({

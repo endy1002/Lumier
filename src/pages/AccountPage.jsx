@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
-import { LogIn, LogOut, Package, Clock, BookOpen, ChevronRight } from 'lucide-react';
+import { LogIn, LogOut, Package, BookOpen } from 'lucide-react';
+import api from '../services/api';
 
 const ORDER_STATUS_MAP = {
   pending: { label: 'Đang xử lý', color: 'text-yellow-600 bg-yellow-50' },
@@ -11,12 +12,71 @@ const ORDER_STATUS_MAP = {
 };
 
 export default function AccountPage() {
-  const { user, isAuthenticated, isLoading, loginWithGoogle, logout, getOrderHistory } =
+  const { user, isAuthenticated, isLoading, loginWithGoogle, logout } =
     useAuth();
   const [tab, setTab] = useState('orders');
   const [loginError, setLoginError] = useState('');
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
 
-  const orders = getOrderHistory();
+  useEffect(() => {
+    const userGoogleId = user?.googleId || user?.id;
+
+    if (!isAuthenticated || !userGoogleId) {
+      setOrders([]);
+      return;
+    }
+
+    let mounted = true;
+    const loadOrders = async () => {
+      setOrdersLoading(true);
+      setOrdersError('');
+      try {
+        const { data } = await api.get('/orders/history', {
+          params: { googleId: userGoogleId },
+        });
+
+        if (!mounted) {
+          return;
+        }
+
+        const mapped = (data || []).map((order) => ({
+          id: order.orderId,
+          date: order.createdAt,
+          status: String(order.status || 'PENDING').toLowerCase(),
+          total: Number(order.totalAmount || 0),
+          items: (order.items || []).map((item) => ({
+            id: item.id,
+            productName: item.productName,
+            quantity: item.quantity,
+            subtotal: Number(item.itemSubtotal || 0),
+            spineColorHex: item.spineColorHex,
+            engravedText: item.engravedText,
+            hardwareType: item.hardwareType,
+            hasExtraChain: item.hasExtraChain,
+            hasUploadedCover: item.hasUploadedCover,
+          })),
+        }));
+
+        setOrders(mapped);
+      } catch (error) {
+        if (mounted) {
+          setOrdersError(error?.response?.data?.error || error?.message || 'Khong the tai lich su don hang');
+        }
+      } finally {
+        if (mounted) {
+          setOrdersLoading(false);
+        }
+      }
+    };
+
+    loadOrders();
+
+    return () => {
+      mounted = false;
+    };
+  }, [isAuthenticated, user?.googleId, user?.id]);
 
   const handleGoogleLogin = async () => {
     setLoginError('');
@@ -133,7 +193,15 @@ export default function AccountPage() {
       {/* Tab content */}
       {tab === 'orders' && (
         <div>
-          {orders.length === 0 ? (
+          {ordersLoading ? (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
+              <p className="font-san text-sm text-brand-muted">Dang tai lich su don hang...</p>
+            </div>
+          ) : ordersError ? (
+            <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
+              <p className="font-san text-sm text-red-500">{ordersError}</p>
+            </div>
+          ) : orders.length === 0 ? (
             <div className="bg-white rounded-2xl p-10 text-center shadow-sm">
               <Package size={48} className="text-brand-cream-dark mx-auto mb-4" />
               <p className="font-san text-sm text-brand-muted">
@@ -189,9 +257,27 @@ export default function AccountPage() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                      <p className="font-san text-xs text-brand-muted">
-                        {order.items.length} sản phẩm
-                      </p>
+                      <div className="font-san text-xs text-brand-muted space-y-1">
+                        {order.items.map((item) => (
+                          <div key={item.id}>
+                            <p>
+                              {item.productName} x{item.quantity}
+                            </p>
+                            {(item.spineColorHex || item.engravedText || item.hardwareType || item.hasExtraChain || item.hasUploadedCover) && (
+                              <p className="text-[11px] text-brand-muted/80">
+                                Customize:{' '}
+                                {[
+                                  item.hardwareType ? `Charm ${item.hardwareType}` : null,
+                                  item.spineColorHex ? `Mau gay ${item.spineColorHex}` : null,
+                                  item.engravedText ? `Khac "${item.engravedText}"` : null,
+                                  item.hasExtraChain ? 'Them day xich' : null,
+                                  item.hasUploadedCover ? 'Co anh cover tai len' : null,
+                                ].filter(Boolean).join(' | ')}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                       <p className="font-golan text-lg font-bold text-brand-amber">
                         {order.total.toLocaleString('vi-VN')}đ
                       </p>

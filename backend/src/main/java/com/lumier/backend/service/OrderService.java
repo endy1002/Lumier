@@ -9,10 +9,13 @@ import com.lumier.backend.domain.UserProfile;
 import com.lumier.backend.domain.enums.OrderStatus;
 import com.lumier.backend.dto.CheckoutRequest;
 import com.lumier.backend.dto.CheckoutResponse;
+import com.lumier.backend.dto.OrderHistoryItemResponse;
+import com.lumier.backend.dto.OrderHistoryResponse;
 import com.lumier.backend.repository.CustomerOrderRepository;
 import com.lumier.backend.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Objects;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +83,7 @@ public class OrderService {
 
       OrderItem item = new OrderItem();
       item.setProduct(product);
+      item.setQuantity(itemRequest.getQuantity());
       item.setItemSubtotal(itemSubtotal);
 
       if (hasCustomization(itemRequest.getCustomization())) {
@@ -101,6 +105,37 @@ public class OrderService {
     userProfileService.markOrderPlaced(request.getGoogleId());
 
     return new CheckoutResponse(saved.getId(), saved.getStatus(), saved.getTotalAmount());
+  }
+
+  @Transactional(readOnly = true)
+  public List<OrderHistoryResponse> getOrderHistory(String googleId) {
+    return customerOrderRepository.findByCustomerGoogleIdOrderByCreatedAtDesc(googleId)
+      .stream()
+      .map(order -> new OrderHistoryResponse(
+        order.getId(),
+        order.getStatus().name(),
+        order.getTotalAmount(),
+        order.getCreatedAt(),
+        order.getOrderItems().stream()
+          .map(item -> new OrderHistoryItemResponse(
+            item.getId(),
+            item.getProduct().getId(),
+            item.getProduct().getName(),
+            item.getQuantity(),
+            item.getItemSubtotal(),
+            item.getCustomization() != null ? item.getCustomization().getSpineColorHex() : null,
+            item.getCustomization() != null ? item.getCustomization().getEngravedText() : null,
+            item.getCustomization() != null && item.getCustomization().getHardwareType() != null
+              ? item.getCustomization().getHardwareType().name()
+              : null,
+            item.getCustomization() != null ? item.getCustomization().getHasExtraChain() : null,
+            item.getCustomization() != null
+              && item.getCustomization().getUploadedCoverUrl() != null
+              && !item.getCustomization().getUploadedCoverUrl().isBlank()
+          ))
+          .toList()
+      ))
+      .toList();
   }
 
   private boolean hasCustomization(CheckoutRequest.CustomizationRequest customization) {

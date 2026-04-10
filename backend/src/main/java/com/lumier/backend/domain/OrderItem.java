@@ -31,6 +31,9 @@ public class OrderItem {
   @Column(name = "item_subtotal", nullable = false, precision = 12, scale = 2)
   private BigDecimal itemSubtotal;
 
+  @Column(nullable = false)
+  private int quantity = 1;
+
   @OneToOne(mappedBy = "orderItem", cascade = CascadeType.ALL, orphanRemoval = true)
   private Customization customization;
 
@@ -71,6 +74,14 @@ public class OrderItem {
 
   public void setItemSubtotal(BigDecimal itemSubtotal) {
     this.itemSubtotal = itemSubtotal;
+  }
+
+  public int getQuantity() {
+    return quantity;
+  }
+
+  public void setQuantity(int quantity) {
+    this.quantity = quantity;
   }
 
   public Customization getCustomization() {
