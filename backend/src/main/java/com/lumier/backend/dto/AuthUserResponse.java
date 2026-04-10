@@ -4,6 +4,9 @@ public record AuthUserResponse(
   String googleId,
   String email,
   String name,
-  String picture
+  String picture,
+  String phone,
+  String shippingAddress,
+  boolean marketingOptIn
 ) {
 }

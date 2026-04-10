@@ -2,7 +2,6 @@ package com.lumier.backend.dto;
 
 import com.lumier.backend.domain.enums.HardwareType;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -12,11 +11,16 @@ import java.util.List;
 public class CheckoutRequest {
 
   @NotBlank
-  @Email
-  private String customerEmail;
+  private String googleId;
+
+  @NotBlank
+  private String customerName;
 
   @NotBlank
   private String customerPhone;
+
+  @NotBlank
+  private String shippingAddress;
 
   @Valid
   private MarketingDataRequest marketingData;
@@ -25,12 +29,20 @@ public class CheckoutRequest {
   @NotEmpty
   private List<CheckoutItemRequest> items;
 
-  public String getCustomerEmail() {
-    return customerEmail;
+  public String getGoogleId() {
+    return googleId;
   }
 
-  public void setCustomerEmail(String customerEmail) {
-    this.customerEmail = customerEmail;
+  public void setGoogleId(String googleId) {
+    this.googleId = googleId;
+  }
+
+  public String getCustomerName() {
+    return customerName;
+  }
+
+  public void setCustomerName(String customerName) {
+    this.customerName = customerName;
   }
 
   public String getCustomerPhone() {
@@ -39,6 +51,14 @@ public class CheckoutRequest {
 
   public void setCustomerPhone(String customerPhone) {
     this.customerPhone = customerPhone;
+  }
+
+  public String getShippingAddress() {
+    return shippingAddress;
+  }
+
+  public void setShippingAddress(String shippingAddress) {
+    this.shippingAddress = shippingAddress;
   }
 
   public MarketingDataRequest getMarketingData() {

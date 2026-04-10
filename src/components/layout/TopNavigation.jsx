@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { NAV_LINKS } from '../../config/constants';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../hooks/useAuth';
 import SearchBar from '../search/SearchBar';
 
 export default function TopNavigation({ onCartClick }) {
@@ -11,6 +12,7 @@ export default function TopNavigation({ onCartClick }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { itemCount } = useCart();
+  const { user, isAuthenticated } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur-md border-b border-brand-cream-dark/50">
@@ -108,7 +110,7 @@ export default function TopNavigation({ onCartClick }) {
               >
                 <User size={20} strokeWidth={1.5} />
                 <span className="hidden sm:block font-san text-[13px] font-medium uppercase tracking-wide">
-                  Hello Endy
+                  {isAuthenticated ? (user?.name || user?.email || 'User') : 'User'}
                 </span>
               </Link>
             </div>

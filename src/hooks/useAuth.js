@@ -83,6 +83,9 @@ export function useAuth() {
         name: data.user.name || data.user.email,
         avatar: data.user.picture || null,
         googleId: data.user.googleId,
+        phone: data.user.phone || '',
+        shippingAddress: data.user.shippingAddress || '',
+        marketingOptIn: Boolean(data.user.marketingOptIn),
       };
 
       setUser(authenticatedUser);
@@ -94,6 +97,10 @@ export function useAuth() {
 
   const logout = useCallback(() => {
     setUser(null);
+  }, []);
+
+  const updateUserProfile = useCallback((patch) => {
+    setUser((current) => (current ? { ...current, ...patch } : current));
   }, []);
 
   const getOrderHistory = useCallback(() => {
@@ -125,6 +132,7 @@ export function useAuth() {
     isAuthenticated: !!user,
     loginWithGoogle,
     logout,
+    updateUserProfile,
     getOrderHistory,
     saveOrder,
   };

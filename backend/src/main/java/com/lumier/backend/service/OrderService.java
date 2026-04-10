@@ -5,6 +5,7 @@ import com.lumier.backend.domain.Customization;
 import com.lumier.backend.domain.MarketingData;
 import com.lumier.backend.domain.OrderItem;
 import com.lumier.backend.domain.Product;
+import com.lumier.backend.domain.UserProfile;
 import com.lumier.backend.domain.enums.OrderStatus;
 import com.lumier.backend.dto.CheckoutRequest;
 import com.lumier.backend.dto.CheckoutResponse;
@@ -22,22 +23,36 @@ public class OrderService {
   private final ProductRepository productRepository;
   private final CustomerOrderRepository customerOrderRepository;
   private final PricingService pricingService;
+  private final UserProfileService userProfileService;
 
   public OrderService(
     ProductRepository productRepository,
     CustomerOrderRepository customerOrderRepository,
-    PricingService pricingService
+    PricingService pricingService,
+    UserProfileService userProfileService
   ) {
     this.productRepository = productRepository;
     this.customerOrderRepository = customerOrderRepository;
     this.pricingService = pricingService;
+    this.userProfileService = userProfileService;
   }
 
   @Transactional
   public CheckoutResponse checkout(CheckoutRequest request) {
+    UserProfile user = userProfileService.getRequiredByGoogleId(request.getGoogleId());
+    userProfileService.updateShippingProfile(
+      request.getGoogleId(),
+      request.getCustomerName(),
+      request.getCustomerPhone(),
+      request.getShippingAddress()
+    );
+
     CustomerOrder order = new CustomerOrder();
-    order.setCustomerEmail(request.getCustomerEmail());
+    order.setCustomerGoogleId(user.getGoogleId());
+    order.setCustomerEmail(user.getEmail());
+    order.setCustomerName(request.getCustomerName());
     order.setCustomerPhone(request.getCustomerPhone());
+    order.setShippingAddress(request.getShippingAddress());
     order.setStatus(OrderStatus.PENDING);
 
     if (request.getMarketingData() != null) {
@@ -83,6 +98,7 @@ public class OrderService {
 
     order.setTotalAmount(totalAmount);
     CustomerOrder saved = customerOrderRepository.save(order);
+    userProfileService.markOrderPlaced(request.getGoogleId());
 
     return new CheckoutResponse(saved.getId(), saved.getStatus(), saved.getTotalAmount());
   }

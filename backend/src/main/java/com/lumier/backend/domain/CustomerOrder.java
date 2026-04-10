@@ -28,8 +28,17 @@ public class CustomerOrder {
   @Column(name = "customer_email", nullable = false)
   private String customerEmail;
 
+  @Column(name = "customer_google_id")
+  private String customerGoogleId;
+
+  @Column(name = "customer_name")
+  private String customerName;
+
   @Column(name = "customer_phone", nullable = false)
   private String customerPhone;
+
+  @Column(name = "shipping_address")
+  private String shippingAddress;
 
   @Column(name = "total_amount", nullable = false, precision = 12, scale = 2)
   private BigDecimal totalAmount;
@@ -68,12 +77,36 @@ public class CustomerOrder {
     this.customerEmail = customerEmail;
   }
 
+  public String getCustomerGoogleId() {
+    return customerGoogleId;
+  }
+
+  public void setCustomerGoogleId(String customerGoogleId) {
+    this.customerGoogleId = customerGoogleId;
+  }
+
+  public String getCustomerName() {
+    return customerName;
+  }
+
+  public void setCustomerName(String customerName) {
+    this.customerName = customerName;
+  }
+
   public String getCustomerPhone() {
     return customerPhone;
   }
 
   public void setCustomerPhone(String customerPhone) {
     this.customerPhone = customerPhone;
+  }
+
+  public String getShippingAddress() {
+    return shippingAddress;
+  }
+
+  public void setShippingAddress(String shippingAddress) {
+    this.shippingAddress = shippingAddress;
   }
 
   public BigDecimal getTotalAmount() {

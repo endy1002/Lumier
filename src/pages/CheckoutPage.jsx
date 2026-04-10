@@ -1,22 +1,23 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Truck, QrCode, CheckCircle } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../hooks/useAuth';
 import { useUTM } from '../hooks/useUTM';
 import { PAYMENT_METHODS } from '../config/constants';
+import api from '../services/api';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
   const { items, subtotal, discount, total, promo, applyPromo, removePromo, promoError, clearCart } = useCart();
-  const { user, saveOrder } = useAuth();
+  const { user, saveOrder, updateUserProfile } = useAuth();
   const { getUTMData } = useUTM();
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
-    phone: '',
-    name: '',
-    address: '',
+    phone: user?.phone || '',
+    name: user?.name || '',
+    address: user?.shippingAddress || '',
     note: '',
     paymentMethod: 'cod',
   });
@@ -24,6 +25,22 @@ export default function CheckoutPage() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
   const [errors, setErrors] = useState({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      email: user.email || prev.email,
+      phone: user.phone || prev.phone,
+      name: user.name || prev.name,
+      address: user.shippingAddress || prev.address,
+    }));
+  }, [user]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,52 +52,80 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!formData.email.trim()) newErrors.email = 'Vui lòng nhập email';
-    else if (!/\S+@\S+\.\S+/.test(formData.email))
-      newErrors.email = 'Email không hợp lệ';
+    if (!user?.googleId) newErrors.auth = 'Vui lòng đăng nhập trước khi thanh toán';
     if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại';
     else if (!/^[0-9]{9,11}$/.test(formData.phone.replace(/\s/g, '')))
       newErrors.phone = 'Số điện thoại không hợp lệ';
     if (!formData.name.trim()) newErrors.name = 'Vui lòng nhập họ tên';
+    if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ giao hàng';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+    setSubmitError('');
+    setIsSubmitting(true);
 
-    // Build order data with UTM params
-    const utmData = getUTMData();
-    const orderData = {
-      items: items.map((item) => ({
-        productId: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        customization: item.customization || null,
-      })),
-      customer: {
-        email: formData.email,
-        phone: formData.phone,
+    try {
+      const utmData = getUTMData() || {};
+      const payload = {
+        googleId: user.googleId,
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        shippingAddress: formData.address,
+        marketingData: {
+          utmSource: utmData.utmSource || null,
+          utmMedium: utmData.utmMedium || null,
+          utmCampaign: utmData.utmCampaign || null,
+        },
+        items: items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+          customization: item.customization
+            ? {
+                uploadedCoverUrl: item.customization.uploadedCoverUrl || null,
+                spineColorHex: item.customization.spineColorHex || null,
+                engravedText: item.customization.engravedText || null,
+                hardwareType: item.customization.hardwareType || null,
+                hasExtraChain: Boolean(item.customization.hasExtraChain),
+              }
+            : null,
+        })),
+      };
+
+      const { data } = await api.post('/orders/checkout', payload);
+
+      const savedOrder = saveOrder({
+        id: data.orderId,
+        status: data.status,
+        total: data.totalAmount,
+        customer: {
+          email: formData.email,
+          phone: formData.phone,
+          name: formData.name,
+          address: formData.address,
+          note: formData.note,
+        },
+        items,
+      });
+
+      setPlacedOrder({ ...savedOrder, id: data.orderId || savedOrder.id });
+      updateUserProfile({
         name: formData.name,
-        address: formData.address,
-        note: formData.note,
-      },
-      paymentMethod: formData.paymentMethod,
-      subtotal,
-      discount,
-      total,
-      promoCode: promo?.code || null,
-      ...utmData,
-    };
-
-    // Save order (mock — stored in localStorage)
-    const savedOrder = saveOrder(orderData);
-    setPlacedOrder(savedOrder);
-    setOrderPlaced(true);
-    clearCart();
+        phone: formData.phone,
+        shippingAddress: formData.address,
+      });
+      setOrderPlaced(true);
+      clearCart();
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Khong the luu don hang. Vui long thu lai.';
+      setSubmitError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // === Order Success Screen ===
@@ -141,6 +186,27 @@ export default function CheckoutPage() {
     );
   }
 
+  if (!user?.googleId) {
+    return (
+      <div className="max-w-lg mx-auto px-4 py-20 text-center">
+        <div className="bg-white rounded-2xl p-10 shadow-sm">
+          <h1 className="font-golan text-2xl font-bold text-brand-charcoal mb-3">
+            Vui lòng đăng nhập
+          </h1>
+          <p className="font-san text-sm text-brand-muted mb-6">
+            Bạn cần đăng nhập bằng Google trước khi thực hiện thanh toán.
+          </p>
+          <Link
+            to="/tai-khoan"
+            className="inline-flex items-center gap-2 px-6 py-3 bg-brand-navy text-white font-san text-sm font-medium rounded-xl"
+          >
+            Đăng nhập ngay
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   // === Checkout Form ===
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -176,21 +242,15 @@ export default function CheckoutPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Email <span className="text-red-500">*</span>
+                    Email đăng nhập
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
-                    onChange={handleChange}
-                    placeholder="email@example.com"
-                    className={`w-full px-4 py-3 border-2 rounded-xl font-san text-sm ${
-                      errors.email ? 'border-red-400' : 'border-brand-cream-dark'
-                    }`}
+                    readOnly
+                    className="w-full px-4 py-3 border-2 border-brand-cream-dark rounded-xl font-san text-sm bg-brand-cream/50"
                   />
-                  {errors.email && (
-                    <p className="font-san text-xs text-red-500 mt-1">{errors.email}</p>
-                  )}
                 </div>
 
                 <div>
@@ -233,7 +293,7 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Địa chỉ giao hàng
+                    Địa chỉ giao hàng <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="address"
@@ -241,8 +301,13 @@ export default function CheckoutPage() {
                     onChange={handleChange}
                     placeholder="Số nhà, đường, quận, thành phố..."
                     rows={2}
-                    className="w-full px-4 py-3 border-2 border-brand-cream-dark rounded-xl font-san text-sm resize-none"
+                    className={`w-full px-4 py-3 border-2 rounded-xl font-san text-sm resize-none ${
+                      errors.address ? 'border-red-400' : 'border-brand-cream-dark'
+                    }`}
                   />
+                  {errors.address && (
+                    <p className="font-san text-xs text-red-500 mt-1">{errors.address}</p>
+                  )}
                 </div>
 
                 <div>
@@ -405,11 +470,16 @@ export default function CheckoutPage() {
               {/* Submit */}
               <button
                 type="submit"
+                disabled={isSubmitting}
                 className="w-full py-4 bg-brand-navy text-white font-san font-semibold rounded-xl hover:bg-brand-deep-blue transition-colors flex items-center justify-center gap-2"
               >
                 <CreditCard size={18} />
-                Đặt hàng
+                {isSubmitting ? 'Dang xu ly...' : 'Đặt hàng'}
               </button>
+
+              {submitError && (
+                <p className="font-san text-xs text-red-500 text-center mt-3">{submitError}</p>
+              )}
 
               <p className="font-san text-[10px] text-brand-muted text-center mt-3">
                 * Đây là thanh toán mô phỏng, không kết nối cổng thanh toán thật

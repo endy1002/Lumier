@@ -1,5 +1,6 @@
 package com.lumier.backend.service;
 
+import com.lumier.backend.domain.UserProfile;
 import com.lumier.backend.dto.AuthUserResponse;
 import com.lumier.backend.dto.GoogleAuthResponse;
 import java.util.Map;
@@ -14,10 +15,15 @@ public class GoogleAuthService {
 
   private final RestClient restClient;
   private final String googleClientId;
+  private final UserProfileService userProfileService;
 
-  public GoogleAuthService(@Value("${app.auth.google.client-id:}") String googleClientId) {
+  public GoogleAuthService(
+    @Value("${app.auth.google.client-id:}") String googleClientId,
+    UserProfileService userProfileService
+  ) {
     this.restClient = RestClient.create();
     this.googleClientId = googleClientId;
+    this.userProfileService = userProfileService;
   }
 
   public GoogleAuthResponse authenticate(String idToken) {
@@ -49,11 +55,21 @@ public class GoogleAuthService {
       throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Google email is not verified");
     }
 
-    AuthUserResponse user = new AuthUserResponse(
+    UserProfile persisted = userProfileService.upsertFromGoogleProfile(
       value(tokenInfo.get("sub")),
       value(tokenInfo.get("email")),
       value(tokenInfo.get("name")),
       value(tokenInfo.get("picture"))
+    );
+
+    AuthUserResponse user = new AuthUserResponse(
+      persisted.getGoogleId(),
+      persisted.getEmail(),
+      persisted.getName(),
+      persisted.getPicture(),
+      persisted.getPhone(),
+      persisted.getShippingAddress(),
+      persisted.isMarketingOptIn()
     );
 
     return new GoogleAuthResponse(user);
