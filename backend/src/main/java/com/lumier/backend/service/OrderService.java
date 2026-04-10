@@ -1,0 +1,98 @@
+package com.lumier.backend.service;
+
+import com.lumier.backend.domain.CustomerOrder;
+import com.lumier.backend.domain.Customization;
+import com.lumier.backend.domain.MarketingData;
+import com.lumier.backend.domain.OrderItem;
+import com.lumier.backend.domain.Product;
+import com.lumier.backend.domain.enums.OrderStatus;
+import com.lumier.backend.dto.CheckoutRequest;
+import com.lumier.backend.dto.CheckoutResponse;
+import com.lumier.backend.repository.CustomerOrderRepository;
+import com.lumier.backend.repository.ProductRepository;
+import jakarta.persistence.EntityNotFoundException;
+import java.math.BigDecimal;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class OrderService {
+
+  private final ProductRepository productRepository;
+  private final CustomerOrderRepository customerOrderRepository;
+  private final PricingService pricingService;
+
+  public OrderService(
+    ProductRepository productRepository,
+    CustomerOrderRepository customerOrderRepository,
+    PricingService pricingService
+  ) {
+    this.productRepository = productRepository;
+    this.customerOrderRepository = customerOrderRepository;
+    this.pricingService = pricingService;
+  }
+
+  @Transactional
+  public CheckoutResponse checkout(CheckoutRequest request) {
+    CustomerOrder order = new CustomerOrder();
+    order.setCustomerEmail(request.getCustomerEmail());
+    order.setCustomerPhone(request.getCustomerPhone());
+    order.setStatus(OrderStatus.PENDING);
+
+    if (request.getMarketingData() != null) {
+      MarketingData marketingData = new MarketingData();
+      marketingData.setUtmSource(request.getMarketingData().getUtmSource());
+      marketingData.setUtmMedium(request.getMarketingData().getUtmMedium());
+      marketingData.setUtmCampaign(request.getMarketingData().getUtmCampaign());
+      order.setMarketingData(marketingData);
+    }
+
+    BigDecimal totalAmount = BigDecimal.ZERO;
+
+    for (CheckoutRequest.CheckoutItemRequest itemRequest : request.getItems()) {
+      Product product = productRepository.findById(itemRequest.getProductId())
+        .filter(Product::isAvailable)
+        .orElseThrow(() -> new EntityNotFoundException("Product not found or unavailable: " + itemRequest.getProductId()));
+
+      BigDecimal itemSubtotal = pricingService.calculateItemSubtotal(
+        product,
+        itemRequest.getCustomization(),
+        itemRequest.getQuantity()
+      );
+
+      OrderItem item = new OrderItem();
+      item.setProduct(product);
+      item.setItemSubtotal(itemSubtotal);
+
+      if (hasCustomization(itemRequest.getCustomization())) {
+        Customization customization = new Customization();
+        customization.setUploadedCoverUrl(itemRequest.getCustomization().getUploadedCoverUrl());
+        customization.setSpineColorHex(itemRequest.getCustomization().getSpineColorHex());
+        customization.setEngravedText(itemRequest.getCustomization().getEngravedText());
+        customization.setHardwareType(itemRequest.getCustomization().getHardwareType());
+        customization.setHasExtraChain(itemRequest.getCustomization().getHasExtraChain());
+        item.setCustomization(customization);
+      }
+
+      order.addOrderItem(item);
+      totalAmount = totalAmount.add(itemSubtotal);
+    }
+
+    order.setTotalAmount(totalAmount);
+    CustomerOrder saved = customerOrderRepository.save(order);
+
+    return new CheckoutResponse(saved.getId(), saved.getStatus(), saved.getTotalAmount());
+  }
+
+  private boolean hasCustomization(CheckoutRequest.CustomizationRequest customization) {
+    if (customization == null) {
+      return false;
+    }
+
+    return (customization.getUploadedCoverUrl() != null && !customization.getUploadedCoverUrl().isBlank())
+      || (customization.getSpineColorHex() != null && !customization.getSpineColorHex().isBlank())
+      || (customization.getEngravedText() != null && !customization.getEngravedText().isBlank())
+      || customization.getHardwareType() != null
+      || Boolean.TRUE.equals(customization.getHasExtraChain());
+  }
+}
