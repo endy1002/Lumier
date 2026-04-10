@@ -42,7 +42,13 @@ export const PAYMENT_METHODS = [
 ];
 
 // API Endpoints (for future Spring Boot backend)
-export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+function normalizeApiBaseUrl(value) {
+  const fallback = 'http://localhost:8080/api';
+  const raw = (value || fallback).trim().replace(/\/+$/, '');
+  return raw.endsWith('/api') ? raw : `${raw}/api`;
+}
+
+export const API_BASE_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL);
 
 export const API_ENDPOINTS = {
   products: `${API_BASE_URL}/products`,
