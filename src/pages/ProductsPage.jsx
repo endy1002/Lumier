@@ -5,6 +5,7 @@ import BookshelfUI from '../components/products/BookshelfUI';
 import ProductRanking from '../components/products/ProductRanking';
 import CustomizePopup from '../components/products/CustomizePopup';
 import { useCart } from '../context/CartContext';
+import { fetchProducts } from '../services/products';
 
 const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
 
@@ -46,6 +47,8 @@ export default function ProductsPage() {
   const [showSelectionModal, setShowSelectionModal] = useState(false);
   const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
   const [hasHydratedDraft, setHasHydratedDraft] = useState(false);
+  const [products, setProducts] = useState([]);
+  const [productsLoading, setProductsLoading] = useState(true);
 
   // Check if redirected from search with no results
   const shouldCustomize = searchParams.get('customize') === 'true';
@@ -56,6 +59,35 @@ export default function ProductsPage() {
     setSelectedItems(draft);
     setHasHydratedDraft(true);
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProducts = async () => {
+      setProductsLoading(true);
+      try {
+        const data = await fetchProducts();
+        if (mounted) {
+          setProducts(data);
+        }
+      } catch {
+        if (mounted) {
+          setProducts([]);
+          showToast('Không thể tải danh sách sản phẩm từ hệ thống.');
+        }
+      } finally {
+        if (mounted) {
+          setProductsLoading(false);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
+  }, [showToast]);
 
   useEffect(() => {
     if (!hasHydratedDraft) return;
@@ -259,17 +291,24 @@ export default function ProductsPage() {
       {/* Main layout: Shelf + Ranking sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
         {/* Bookshelf */}
-        <BookshelfUI
-          onProductClick={handleProductClick}
-          selectedProductId={pendingProduct?.id}
-          selectedQuantities={selectedQuantities}
-          searchTerm={searchTerm}
-        />
+        {productsLoading ? (
+          <div className="rounded-2xl border border-brand-cream-dark bg-white p-8 text-center">
+            <p className="font-san text-sm text-brand-muted">Đang tải sản phẩm...</p>
+          </div>
+        ) : (
+          <BookshelfUI
+            products={products}
+            onProductClick={handleProductClick}
+            selectedProductId={pendingProduct?.id}
+            selectedQuantities={selectedQuantities}
+            searchTerm={searchTerm}
+          />
+        )}
 
         {/* Sidebar: Bestseller Ranking */}
         <aside className="hidden lg:block">
           <div className="sticky top-24">
-            <ProductRanking />
+            <ProductRanking products={products} />
           </div>
         </aside>
       </div>

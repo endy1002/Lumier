@@ -1,7 +1,13 @@
-import { getBestSellers } from '../../data/products';
+import { useMemo } from 'react';
 
-export default function ProductRanking() {
-  const topProducts = getBestSellers();
+export default function ProductRanking({ products = [] }) {
+  const topProducts = useMemo(
+    () =>
+      products
+        .filter((product) => product.category === 'CHARM')
+        .slice(0, 5),
+    [products]
+  );
 
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm">
@@ -48,11 +54,15 @@ export default function ProductRanking() {
                 {product.name}
               </p>
               <p className="font-san text-xs text-brand-muted">
-                {product.salesCount} đã bán
+                {product.basePrice.toLocaleString('vi-VN')}đ
               </p>
             </div>
           </div>
         ))}
+
+        {topProducts.length === 0 && (
+          <p className="font-san text-xs text-brand-muted">Chưa có dữ liệu sản phẩm.</p>
+        )}
       </div>
     </div>
   );

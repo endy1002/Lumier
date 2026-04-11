@@ -8,6 +8,7 @@ public record ProductResponse(
   String name,
   ProductCategory category,
   BigDecimal basePrice,
+  String imageUrl,
   boolean isAvailable
 ) {
 }

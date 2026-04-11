@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { LogIn, LogOut, Package, BookOpen } from 'lucide-react';
 import api from '../services/api';
+import { SPINE_COLORS } from '../config/constants';
 
 const ORDER_STATUS_MAP = {
   pending: { label: 'Đang xử lý', color: 'text-yellow-600 bg-yellow-50' },
@@ -10,6 +11,32 @@ const ORDER_STATUS_MAP = {
   delivered: { label: 'Đã giao', color: 'text-green-600 bg-green-50' },
   cancelled: { label: 'Đã hủy', color: 'text-red-600 bg-red-50' },
 };
+
+function normalizeHexColor(value) {
+  if (!value) return '';
+  const normalized = String(value).trim().toUpperCase();
+  return normalized.startsWith('#') ? normalized : `#${normalized}`;
+}
+
+const SPINE_COLOR_BY_HEX = SPINE_COLORS.reduce((acc, color) => {
+  acc[normalizeHexColor(color.hex)] = color.label;
+  return acc;
+}, {});
+
+const HARDWARE_TYPE_LABELS = {
+  SILVER: 'Charm Bạc',
+  GOLD: 'Charm Vàng',
+};
+
+function resolveSpineColorName(spineColorHex) {
+  const normalized = normalizeHexColor(spineColorHex);
+  return SPINE_COLOR_BY_HEX[normalized] || normalized || null;
+}
+
+function resolveHardwareLabel(hardwareType) {
+  if (!hardwareType) return null;
+  return HARDWARE_TYPE_LABELS[String(hardwareType).toUpperCase()] || hardwareType;
+}
 
 export default function AccountPage() {
   const { user, isAuthenticated, isLoading, loginWithGoogle, logout } =
@@ -52,8 +79,10 @@ export default function AccountPage() {
             quantity: item.quantity,
             subtotal: Number(item.itemSubtotal || 0),
             spineColorHex: item.spineColorHex,
+            spineColorName: resolveSpineColorName(item.spineColorHex),
             engravedText: item.engravedText,
             hardwareType: item.hardwareType,
+            hardwareLabel: resolveHardwareLabel(item.hardwareType),
             hasExtraChain: item.hasExtraChain,
             hasUploadedCover: item.hasUploadedCover,
           })),
@@ -265,13 +294,13 @@ export default function AccountPage() {
                             </p>
                             {(item.spineColorHex || item.engravedText || item.hardwareType || item.hasExtraChain || item.hasUploadedCover) && (
                               <p className="text-[11px] text-brand-muted/80">
-                                Customize:{' '}
+                                Màu:{' '}
                                 {[
-                                  item.hardwareType ? `Charm ${item.hardwareType}` : null,
-                                  item.spineColorHex ? `Mau gay ${item.spineColorHex}` : null,
-                                  item.engravedText ? `Khac "${item.engravedText}"` : null,
-                                  item.hasExtraChain ? 'Them day xich' : null,
-                                  item.hasUploadedCover ? 'Co anh cover tai len' : null,
+                                  item.hardwareLabel || null,
+                                  item.spineColorName ? `Màu gáy: ${item.spineColorName}` : null,
+                                  item.engravedText ? `Khắc: "${item.engravedText}"` : null,
+                                  item.hasExtraChain ? 'Thêm dây xích' : null,
+                                  item.hasUploadedCover ? 'Có ảnh cover tải lên' : null,
                                 ].filter(Boolean).join(' | ')}
                               </p>
                             )}

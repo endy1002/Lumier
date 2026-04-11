@@ -29,6 +29,9 @@ public class Product {
   @Column(name = "base_price", nullable = false, precision = 12, scale = 2)
   private BigDecimal basePrice;
 
+  @Column(name = "image_url")
+  private String imageUrl;
+
   @Column(name = "is_available", nullable = false)
   private boolean isAvailable = true;
 
@@ -70,5 +73,13 @@ public class Product {
 
   public void setAvailable(boolean available) {
     isAvailable = available;
+  }
+
+  public String getImageUrl() {
+    return imageUrl;
+  }
+
+  public void setImageUrl(String imageUrl) {
+    this.imageUrl = imageUrl;
   }
 }

@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
-import { getProductById } from '../data/products';
 import { useCart } from '../context/CartContext';
 import Product3DPreview from '../components/products/Product3DPreview';
 import CustomizationControls from '../components/products/CustomizationControls';
 import CustomizePopup from '../components/products/CustomizePopup';
 import { CHARM_TYPES, SPINE_COLORS, PRICING } from '../config/constants';
+import { fetchProductById } from '../services/products';
 
 const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
 const CUSTOMIZE_PAYLOAD_KEY = 'lumier-customize-payload';
@@ -21,7 +21,8 @@ export default function CustomizationPage() {
   const { showToast } = useOutletContext();
   const { addItem } = useCart();
 
-  const product = useMemo(() => getProductById(productId), [productId]);
+  const [product, setProduct] = useState(null);
+  const [isLoadingProduct, setIsLoadingProduct] = useState(true);
   const draftKeyFromQuery = searchParams.get('draftKey') || null;
   const returnToProducts = searchParams.get('returnTo') === 'products';
 
@@ -49,6 +50,42 @@ export default function CustomizationPage() {
 
   const nextAction = searchParams.get('next') === 'checkout' ? 'checkout' : 'cart';
 
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProduct = async () => {
+      setIsLoadingProduct(true);
+      try {
+        const data = await fetchProductById(productId);
+        if (mounted) {
+          setProduct(data);
+        }
+      } catch {
+        if (mounted) {
+          setProduct(null);
+        }
+      } finally {
+        if (mounted) {
+          setIsLoadingProduct(false);
+        }
+      }
+    };
+
+    loadProduct();
+
+    return () => {
+      mounted = false;
+    };
+  }, [productId]);
+
+  if (isLoadingProduct) {
+    return (
+      <div className="min-h-[50vh] flex flex-col items-center justify-center">
+        <p className="font-san text-brand-muted text-lg mb-4">Đang tải sản phẩm...</p>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
        <div className="min-h-[50vh] flex flex-col items-center justify-center">
@@ -75,7 +112,7 @@ export default function CustomizationPage() {
     if (customCover) price += PRICING.CUSTOM_COVER;
     if (engravedText.trim()) price += PRICING.CUSTOMIZE_ADDON;
     return price;
-  }, [product.basePrice, customCover, engravedText]);
+  }, [customCover, engravedText, product?.basePrice]);
 
   const handleConfirm = () => {
     setShowFinalizePopup(true);

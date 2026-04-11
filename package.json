@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "backend:dev": "./scripts/run-backend-dev.sh",
+    "db:sync:prod-to-local": "./scripts/sync-prod-db-to-local.sh",
     "build": "vite build",
     "preview": "vite preview"
   },

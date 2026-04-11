@@ -25,6 +25,7 @@ public class ProductController {
         p.getName(),
         p.getCategory(),
         p.getBasePrice(),
+        p.getImageUrl(),
         p.isAvailable()
       ))
       .toList();

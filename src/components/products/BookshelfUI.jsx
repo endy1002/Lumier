@@ -1,31 +1,31 @@
 import { useMemo } from 'react';
-import { getProductsByShelf } from '../../data/products';
 import ProductCard from './ProductCard';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
 
 const SHELF_GROUPS = [
-  { id: 'charm', title: 'Bookcharm', shelves: [1, 2] },
-  { id: 'bookmark', title: 'Bookmark', shelves: [3] },
-  { id: 'note', title: 'Sổ Notes', shelves: [4] },
+  { id: 'charm', title: 'Bookcharm', categories: ['CHARM'] },
+  { id: 'bookmark', title: 'Bookmark', categories: ['BOOKMARK'] },
+  { id: 'note', title: 'Sổ Notes', categories: ['NOTEBOOK'] },
 ];
 
-export default function BookshelfUI({ onProductClick, selectedProductId, selectedQuantities = {}, searchTerm = '' }) {
+export default function BookshelfUI({ products = [], onProductClick, selectedProductId, selectedQuantities = {}, searchTerm = '' }) {
   const normalizedSearch = searchTerm.trim().toLowerCase();
   const groupsWithProducts = useMemo(
     () =>
       SHELF_GROUPS.map((group) => ({
         ...group,
-        products: group.shelves
-          .flatMap((shelfNum) => getProductsByShelf(shelfNum))
+        products: products
+          .filter((product) => group.categories.includes(product.category))
           .filter((product) => {
             if (!normalizedSearch) return true;
+            const description = (product.description || '').toLowerCase();
             return (
               product.name.toLowerCase().includes(normalizedSearch) ||
-              product.description.toLowerCase().includes(normalizedSearch)
+              description.includes(normalizedSearch)
             );
           }),
       })).filter((group) => group.products.length > 0),
-    [normalizedSearch]
+    [products, normalizedSearch]
   );
 
   return (

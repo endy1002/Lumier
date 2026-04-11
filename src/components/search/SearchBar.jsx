@@ -1,14 +1,38 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search as SearchIcon, X } from 'lucide-react';
-import { PRODUCTS } from '../../data/products';
+import { fetchProducts } from '../../services/products';
 
 export default function SearchBar({ onClose, onNavigate }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
+  const [products, setProducts] = useState([]);
   const inputRef = useRef(null);
 
   useEffect(() => {
     inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadProducts = async () => {
+      try {
+        const data = await fetchProducts();
+        if (mounted) {
+          setProducts(data);
+        }
+      } catch {
+        if (mounted) {
+          setProducts([]);
+        }
+      }
+    };
+
+    loadProducts();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -18,14 +42,14 @@ export default function SearchBar({ onClose, onNavigate }) {
     }
 
     const q = query.toLowerCase();
-    const matched = PRODUCTS.filter(
+    const matched = products.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q)
+        (p.description || '').toLowerCase().includes(q)
     ).slice(0, 5);
 
     setResults(matched);
-  }, [query]);
+  }, [products, query]);
 
   const handleSelect = (product) => {
     onNavigate(`/san-pham?highlight=${product.id}`);
