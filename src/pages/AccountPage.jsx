@@ -308,7 +308,7 @@ export default function AccountPage() {
                         ))}
                       </div>
                       <p className="font-golan text-lg font-bold text-brand-amber">
-                        {order.total.toLocaleString('vi-VN')}đ
+                        {order.total.toLocaleString('vi-VN')}
                       </p>
                     </div>
                   </div>

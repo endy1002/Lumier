@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { Component, useState, useMemo, useEffect } from 'react';
 import { useParams, useNavigate, useOutletContext, useSearchParams } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import Product3DPreview from '../components/products/Product3DPreview';
@@ -9,16 +9,43 @@ import { fetchProductById } from '../services/products';
 
 const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
 const CUSTOMIZE_PAYLOAD_KEY = 'lumier-customize-payload';
+const CUSTOMIZE_PRODUCT_KEY = 'lumier-customize-product';
 
 function createDraftKey(productId) {
   return `custom:${productId}:${Date.now()}:${Math.random().toString(36).slice(2, 7)}`;
+}
+
+class PreviewErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full min-h-[400px] lg:min-h-screen flex items-center justify-center bg-brand-cream-dark/30">
+          <p className="font-san text-sm text-brand-muted px-6 text-center">
+            Không thể hiển thị preview 3D trên trình duyệt này. Bạn vẫn có thể tùy chỉnh và thêm vào giỏ hàng.
+          </p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
 }
 
 export default function CustomizationPage() {
   const { productId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { showToast } = useOutletContext();
+  const outletContext = useOutletContext();
+  const showToast = outletContext?.showToast || (() => {});
   const { addItem } = useCart();
 
   const [product, setProduct] = useState(null);
@@ -37,6 +64,20 @@ export default function CustomizationPage() {
       return null;
     }
   }, []);
+
+  const fallbackProduct = useMemo(() => {
+    try {
+      const raw = window.sessionStorage.getItem(CUSTOMIZE_PRODUCT_KEY);
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw);
+      if (!parsed?.id) return null;
+
+      return String(parsed.id) === String(productId) ? parsed : null;
+    } catch {
+      return null;
+    }
+  }, [productId]);
 
   // State Management
   const [charmType, setCharmType] = useState(initialPayload?.charmType || CHARM_TYPES[0].id);
@@ -58,11 +99,11 @@ export default function CustomizationPage() {
       try {
         const data = await fetchProductById(productId);
         if (mounted) {
-          setProduct(data);
+          setProduct(data || fallbackProduct);
         }
       } catch {
         if (mounted) {
-          setProduct(null);
+          setProduct(fallbackProduct);
         }
       } finally {
         if (mounted) {
@@ -76,7 +117,14 @@ export default function CustomizationPage() {
     return () => {
       mounted = false;
     };
-  }, [productId]);
+  }, [fallbackProduct, productId]);
+
+  const totalPrice = useMemo(() => {
+    let price = product?.basePrice || PRICING.BASE_CHARM;
+    if (customCover) price += PRICING.CUSTOM_COVER;
+    if (engravedText.trim()) price += PRICING.CUSTOMIZE_ADDON;
+    return price;
+  }, [customCover, engravedText, product?.basePrice]);
 
   if (isLoadingProduct) {
     return (
@@ -106,13 +154,6 @@ export default function CustomizationPage() {
       reader.readAsDataURL(file);
     }
   };
-
-  const totalPrice = useMemo(() => {
-    let price = product.basePrice || PRICING.BASE_CHARM;
-    if (customCover) price += PRICING.CUSTOM_COVER;
-    if (engravedText.trim()) price += PRICING.CUSTOMIZE_ADDON;
-    return price;
-  }, [customCover, engravedText, product?.basePrice]);
 
   const handleConfirm = () => {
     setShowFinalizePopup(true);
@@ -174,6 +215,7 @@ export default function CustomizationPage() {
 
         window.sessionStorage.setItem(SELECTION_DRAFT_KEY, JSON.stringify(nextDraft));
         window.sessionStorage.removeItem(CUSTOMIZE_PAYLOAD_KEY);
+        window.sessionStorage.removeItem(CUSTOMIZE_PRODUCT_KEY);
         savedToDraft = true;
       } catch {
         savedToDraft = false;
@@ -190,6 +232,7 @@ export default function CustomizationPage() {
       addItem(product, customization);
       showToast(`${product.name} (đã tùy chỉnh) đã được thêm vào giỏ hàng!`);
       setShowFinalizePopup(false);
+      window.sessionStorage.removeItem(CUSTOMIZE_PRODUCT_KEY);
       navigate('/san-pham');
       return;
     }
@@ -197,6 +240,7 @@ export default function CustomizationPage() {
     addItem(product, customization);
     showToast(`${product.name} (đã thiết kế 3D) đã được thêm vào giỏ hàng!`);
     setShowFinalizePopup(false);
+    window.sessionStorage.removeItem(CUSTOMIZE_PRODUCT_KEY);
 
     if (nextAction === 'checkout') {
       navigate('/thanh-toan');
@@ -209,10 +253,12 @@ export default function CustomizationPage() {
   const handleFinalizeDecline = () => {
     setShowFinalizePopup(false);
     window.sessionStorage.removeItem(CUSTOMIZE_PAYLOAD_KEY);
+    window.sessionStorage.removeItem(CUSTOMIZE_PRODUCT_KEY);
     navigate('/san-pham');
   };
 
   const handleCancel = () => {
+    window.sessionStorage.removeItem(CUSTOMIZE_PRODUCT_KEY);
     navigate('/san-pham');
   };
 
@@ -221,14 +267,16 @@ export default function CustomizationPage() {
       <div className="flex flex-col lg:flex-row h-full">
         {/* Left: 3D Canvas */}
         <div className="flex-1 min-h-[500px] lg:min-h-0 relative h-full">
-           <Product3DPreview 
+          <PreviewErrorBoundary>
+            <Product3DPreview 
               charmTypeId={charmType}
               spineColorId={spineColor}
               engravedText={engravedText}
               coverPreviewUrl={coverPreviewUrl}
               fallbackCoverUrl={product.image}
               focusSpine={focusSpinePreview}
-           />
+            />
+          </PreviewErrorBoundary>
         </div>
 
         {/* Right: Controls Panel */}

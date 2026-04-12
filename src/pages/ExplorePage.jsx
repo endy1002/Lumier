@@ -1,9 +1,46 @@
+import { useEffect, useState } from 'react';
 import AudiobookSection from '../components/explore/AudiobookSection';
 import AuthorInfo from '../components/explore/AuthorInfo';
 import { useScrollReveal } from '../hooks/useScrollReveal';
+import { useAuth } from '../hooks/useAuth';
+import { fetchExploreAuthors, fetchExploreSummaries } from '../services/explore';
 
 export default function ExplorePage() {
   const [refSummary, summaryVisible] = useScrollReveal();
+  const { user } = useAuth();
+  const [authors, setAuthors] = useState([]);
+  const [summaries, setSummaries] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadExploreData = async () => {
+      try {
+        const [authorData, summaryData] = await Promise.all([
+          fetchExploreAuthors(),
+          fetchExploreSummaries(),
+        ]);
+
+        if (!mounted) {
+          return;
+        }
+
+        setAuthors(authorData);
+        setSummaries(summaryData);
+      } catch {
+        if (mounted) {
+          setAuthors([]);
+          setSummaries([]);
+        }
+      }
+    };
+
+    loadExploreData();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div>
@@ -24,7 +61,7 @@ export default function ExplorePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-16">
 
         <section>
-          <AudiobookSection />
+          <AudiobookSection googleId={user?.googleId} />
         </section>
 
         <section
@@ -43,31 +80,9 @@ export default function ExplorePage() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[
-                {
-                  title: 'Nhà Giả Kim',
-                  author: 'Paulo Coelho',
-                  excerpt:
-                    'Câu chuyện về chàng chăn cừu Santiago trong hành trình theo đuổi giấc mơ vượt sa mạc Sahara...',
-                  tag: 'Phiêu lưu',
-                },
-                {
-                  title: 'Đắc Nhân Tâm',
-                  author: 'Dale Carnegie',
-                  excerpt:
-                    'Những nguyên tắc cơ bản trong giao tiếp và cách đối nhân xử thế để chinh phục lòng người...',
-                  tag: 'Self-help',
-                },
-                {
-                  title: 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh',
-                  author: 'Nguyễn Nhật Ánh',
-                  excerpt:
-                    'Câu chuyện tuổi thơ trong sáng về tình bạn, tình anh em và cuộc sống làng quê miền Trung...',
-                  tag: 'Văn học Việt',
-                },
-              ].map((book) => (
+              {summaries.map((book) => (
                 <div
-                  key={book.title}
+                  key={book.id}
                   className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <span className="inline-block font-san text-[10px] font-semibold uppercase tracking-wider bg-brand-amber/10 text-brand-amber px-2.5 py-1 rounded-full mb-3">
@@ -88,11 +103,17 @@ export default function ExplorePage() {
                 </div>
               ))}
             </div>
+
+            {summaries.length === 0 && (
+              <div className="bg-white rounded-xl p-6 mt-4 text-center">
+                <p className="font-san text-sm text-brand-muted">Chưa có dữ liệu tóm tắt sách.</p>
+              </div>
+            )}
           </div>
         </section>
 
         <section>
-          <AuthorInfo />
+          <AuthorInfo authors={authors} />
         </section>
       </div>
     </div>

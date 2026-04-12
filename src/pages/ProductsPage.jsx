@@ -8,6 +8,7 @@ import { useCart } from '../context/CartContext';
 import { fetchProducts } from '../services/products';
 
 const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
+const CUSTOMIZE_PRODUCT_KEY = 'lumier-customize-product';
 
 function createDraftKey(productId, customization) {
   if (!customization) return `default:${productId}`;
@@ -208,6 +209,11 @@ export default function ProductsPage() {
     if (entry.product.category !== 'CHARM') return;
 
     window.sessionStorage.setItem(
+      CUSTOMIZE_PRODUCT_KEY,
+      JSON.stringify(entry.product)
+    );
+
+    window.sessionStorage.setItem(
       'lumier-customize-payload',
       JSON.stringify({
         draftKey: entry.draftKey,
@@ -220,6 +226,11 @@ export default function ProductsPage() {
 
   const handleCustomizeAccept = () => {
     if (!pendingProduct) return;
+
+    window.sessionStorage.setItem(
+      CUSTOMIZE_PRODUCT_KEY,
+      JSON.stringify(pendingProduct)
+    );
 
     window.sessionStorage.removeItem('lumier-customize-payload');
     setShowCustomizePopup(false);

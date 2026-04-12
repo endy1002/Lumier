@@ -27,17 +27,20 @@ public class OrderService {
   private final CustomerOrderRepository customerOrderRepository;
   private final PricingService pricingService;
   private final UserProfileService userProfileService;
+  private final AudiobookCodeService audiobookCodeService;
 
   public OrderService(
     ProductRepository productRepository,
     CustomerOrderRepository customerOrderRepository,
     PricingService pricingService,
-    UserProfileService userProfileService
+    UserProfileService userProfileService,
+    AudiobookCodeService audiobookCodeService
   ) {
     this.productRepository = productRepository;
     this.customerOrderRepository = customerOrderRepository;
     this.pricingService = pricingService;
     this.userProfileService = userProfileService;
+    this.audiobookCodeService = audiobookCodeService;
   }
 
   @Transactional
@@ -103,6 +106,7 @@ public class OrderService {
     order.setTotalAmount(totalAmount);
     CustomerOrder saved = customerOrderRepository.save(order);
     userProfileService.markOrderPlaced(request.getGoogleId());
+    audiobookCodeService.issueCodesForOrder(saved);
 
     return new CheckoutResponse(saved.getId(), saved.getStatus(), saved.getTotalAmount());
   }

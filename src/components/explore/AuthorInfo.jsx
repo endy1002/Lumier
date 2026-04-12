@@ -1,10 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { AUTHORS } from '../../data/audiobooks';
 
-export default function AuthorInfo() {
-  const [activeAuthorId, setActiveAuthorId] = useState(AUTHORS[0]?.id || null);
-  const orderedAuthorImages = ['/images/authors/01.jpeg', '/images/authors/02.jpeg', '/images/authors/03.jpeg'];
+export default function AuthorInfo({ authors = [] }) {
+  const [activeAuthorId, setActiveAuthorId] = useState(authors[0]?.id || null);
+
+  useEffect(() => {
+    if (!activeAuthorId && authors.length > 0) {
+      setActiveAuthorId(authors[0].id);
+    }
+  }, [activeAuthorId, authors]);
 
   return (
     <div>
@@ -16,9 +20,9 @@ export default function AuthorInfo() {
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {AUTHORS.map((author, idx) => {
+        {authors.map((author) => {
           const isOpen = activeAuthorId === author.id;
-          const avatarSrc = orderedAuthorImages[idx] || author.avatar;
+          const avatarSrc = author.avatarUrl || '/images/authors/01.jpeg';
 
           return (
             <button
@@ -65,7 +69,7 @@ export default function AuthorInfo() {
                         Tác phẩm tiêu biểu
                       </p>
                       <div className="flex flex-wrap gap-1.5">
-                        {author.works.map((work) => (
+                          {(author.works || []).map((work) => (
                           <span
                             key={work}
                             className="font-san text-xs bg-brand-cream px-2.5 py-1 rounded-full text-brand-charcoal"
@@ -82,6 +86,12 @@ export default function AuthorInfo() {
           );
         })}
       </div>
+
+      {authors.length === 0 && (
+        <div className="bg-white rounded-2xl p-6 text-center shadow-sm">
+          <p className="font-san text-sm text-brand-muted">Chưa có dữ liệu tác giả.</p>
+        </div>
+      )}
     </div>
   );
 }

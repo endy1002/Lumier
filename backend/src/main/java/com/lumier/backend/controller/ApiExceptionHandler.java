@@ -26,4 +26,10 @@ public class ApiExceptionHandler {
       .orElse("Invalid request");
     return Map.of("error", message);
   }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Map<String, String> handleBadRequest(IllegalArgumentException ex) {
+    return Map.of("error", ex.getMessage());
+  }
 }
