@@ -104,6 +104,34 @@ export async function uploadAdminAudio({ googleId, file, onProgress }) {
   return data;
 }
 
+export async function fetchAdminBlogs(googleId) {
+  const { data } = await api.get('/admin/blogs', {
+    params: { googleId },
+  });
+
+  return data || [];
+}
+
+export async function createAdminBlog({ googleId, payload }) {
+  const { data } = await api.post('/admin/blogs', payload, {
+    params: { googleId },
+  });
+  return data;
+}
+
+export async function updateAdminBlog({ googleId, blogId, payload }) {
+  const { data } = await api.put(`/admin/blogs/${blogId}`, payload, {
+    params: { googleId },
+  });
+  return data;
+}
+
+export async function deleteAdminBlog({ googleId, blogId }) {
+  await api.delete(`/admin/blogs/${blogId}`, {
+    params: { googleId },
+  });
+}
+
 export async function fetchAdminOrders(googleId) {
   const { data } = await api.get('/admin/management/orders', { params: { googleId } });
   return data || [];

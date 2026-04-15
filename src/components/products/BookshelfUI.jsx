@@ -72,17 +72,41 @@ function ShelfGroupSection({ group, selectedProductId, selectedQuantities, onPro
         <div className="flex-1 h-px bg-brand-cream-dark" />
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
-        {group.products.map((product) => (
-          <div key={product.id}>
-            <ProductCard
-              product={product}
-              isSelected={selectedProductId === product.id || (selectedQuantities[product.id] || 0) > 0}
-              selectedQuantity={selectedQuantities[product.id] || 0}
-              onAddClick={() => onProductClick(product)}
-            />
+      <div className="space-y-3">
+        <div className="bookshelf-scroll overflow-x-auto pb-2">
+          <div className="w-full md:max-w-[940px]">
+            <div className="flex w-max gap-4 md:gap-5">
+              {group.products.map((product) => (
+                <div key={product.id} className="w-[170px] sm:w-[190px] md:w-[220px] flex-shrink-0">
+                <ProductCard
+                  product={product}
+                  isSelected={selectedProductId === product.id || (selectedQuantities[product.id] || 0) > 0}
+                  selectedQuantity={selectedQuantities[product.id] || 0}
+                  onAddClick={() => onProductClick(product)}
+                />
+              </div>
+              ))}
+            </div>
           </div>
-        ))}
+        </div>
+
+        {group.products.length > 4 && (
+          <div className="flex items-center justify-end">
+            <p className="font-san text-xs text-brand-muted">
+              Kéo thanh scroll bên dưới để xem thêm sản phẩm trong shelf này.
+            </p>
+          </div>
+        )}
+
+        {group.products.length === 0 && (
+          <button
+            type="button"
+            className="w-full text-left rounded-xl border border-brand-cream-dark p-4 font-san text-sm text-brand-muted"
+            disabled
+          >
+            Chưa có sản phẩm trong nhóm này.
+          </button>
+        )}
       </div>
     </section>
   );

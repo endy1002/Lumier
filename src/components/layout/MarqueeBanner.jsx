@@ -17,11 +17,11 @@ export default function MarqueeBanner() {
   return (
     <div className="bg-brand-navy text-white overflow-hidden py-2.5 flex whitespace-nowrap group">
       {/* First track */}
-      <div className="flex animate-marquee shrink-0 group-hover:[animation-play-state:paused]">
+      <div className="flex animate-marquee [animation-duration:60s] shrink-0 group-hover:[animation-play-state:paused]">
         {trackContent}
       </div>
       {/* Second identical track that follows immediately after the first */}
-      <div className="flex animate-marquee shrink-0 group-hover:[animation-play-state:paused]" aria-hidden="true">
+      <div className="flex animate-marquee [animation-duration:60s] shrink-0 group-hover:[animation-play-state:paused]" aria-hidden="true">
         {trackContent}
       </div>
     </div>

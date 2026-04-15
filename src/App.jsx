@@ -7,6 +7,7 @@ import Layout from './components/layout/Layout';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ExplorePage from './pages/ExplorePage';
+import ArticlesPage from './pages/ArticlesPage';
 import CheckoutPage from './pages/CheckoutPage';
 import AccountPage from './pages/AccountPage';
 import NotFoundPage from './pages/NotFoundPage';
@@ -24,7 +25,8 @@ function AppContent() {
         <Route path="san-pham" element={<ProductsPage />} />
         <Route path="customize/:productId" element={<CustomizationPage />} />
         <Route path="kham-pha" element={<ExplorePage />} />
-        <Route path="bai-viet" element={<NotFoundPage />} />
+        <Route path="bai-viet" element={<ArticlesPage />} />
+        <Route path="bai-viet/:slug" element={<ArticlesPage />} />
         <Route path="thanh-toan" element={<CheckoutPage />} />
         <Route path="tai-khoan" element={<AccountPage />} />
         <Route path="admin" element={<AdminPage />} />

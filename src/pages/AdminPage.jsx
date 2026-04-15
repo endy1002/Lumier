@@ -2,13 +2,17 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { ShieldAlert, ShieldCheck, Plus, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import {
+  createAdminBlog,
   createAdminAuthor,
   createAdminProduct,
+  deleteAdminBlog,
   deleteAdminAuthor,
   deleteAdminProduct,
+  fetchAdminBlogs,
   fetchAdminExploreDashboard,
   fetchAdminOrders,
   fetchAdminUsers,
+  updateAdminBlog,
   updateAdminAudiobook,
   updateAdminAuthor,
   updateAdminOrderStatus,
@@ -64,6 +68,20 @@ const EMPTY_AUDIOBOOK = {
   isActive: true,
 };
 
+const EMPTY_BLOG = {
+  id: '',
+  title: '',
+  slug: '',
+  excerpt: '',
+  contentHtml: '',
+  coverImageUrl: '',
+  sourceName: 'Lumier',
+  seoTitle: '',
+  seoDescription: '',
+  isPublished: false,
+  publishedAt: '',
+};
+
 function toProductForm(item) {
   return {
     ...EMPTY_PRODUCT,
@@ -111,6 +129,27 @@ function toAudiobookForm(item) {
   };
 }
 
+function toBlogForm(item) {
+  const normalizedDate = item?.publishedAt
+    ? new Date(item.publishedAt).toISOString().slice(0, 16)
+    : '';
+
+  return {
+    ...EMPTY_BLOG,
+    id: item?.id ? String(item.id) : '',
+    title: item?.title || '',
+    slug: item?.slug || '',
+    excerpt: item?.excerpt || '',
+    contentHtml: item?.contentHtml || '',
+    coverImageUrl: item?.coverImageUrl || '',
+    sourceName: item?.sourceName || 'Lumier',
+    seoTitle: item?.seoTitle || '',
+    seoDescription: item?.seoDescription || '',
+    isPublished: Boolean(item?.isPublished),
+    publishedAt: normalizedDate,
+  };
+}
+
 export default function AdminPage() {
   const { user, isAuthenticated, isLoading, loginWithGoogle } = useAuth();
   const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN';
@@ -119,10 +158,12 @@ export default function AdminPage() {
   const [dashboard, setDashboard] = useState({ products: [], authors: [], audiobooks: [] });
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [blogs, setBlogs] = useState([]);
 
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [authorForm, setAuthorForm] = useState(EMPTY_AUTHOR);
   const [audiobookForm, setAudiobookForm] = useState(EMPTY_AUDIOBOOK);
+  const [blogForm, setBlogForm] = useState(EMPTY_BLOG);
 
   const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -186,6 +227,11 @@ export default function AdminPage() {
     [dashboard.audiobooks, audiobookForm.id]
   );
 
+  const selectedBlog = useMemo(
+    () => blogs.find((item) => String(item.id) === String(blogForm.id)) || null,
+    [blogs, blogForm.id]
+  );
+
   const loadAll = async () => {
     if (!user?.googleId) {
       return;
@@ -194,15 +240,17 @@ export default function AdminPage() {
     setIsFetching(true);
     setError('');
     try {
-      const [exploreData, orderData, userData] = await Promise.all([
+      const [exploreData, orderData, userData, blogData] = await Promise.all([
         fetchAdminExploreDashboard(user.googleId),
         fetchAdminOrders(user.googleId),
         fetchAdminUsers(user.googleId),
+        fetchAdminBlogs(user.googleId),
       ]);
 
       setDashboard(exploreData);
       setOrders(orderData);
       setUsers(userData);
+      setBlogs(blogData);
 
       if (!productForm.id && exploreData.products[0]) {
         setProductForm(toProductForm(exploreData.products[0]));
@@ -212,6 +260,9 @@ export default function AdminPage() {
       }
       if (!audiobookForm.id && exploreData.audiobooks[0]) {
         setAudiobookForm(toAudiobookForm(exploreData.audiobooks[0]));
+      }
+      if (!blogForm.id && blogData[0]) {
+        setBlogForm(toBlogForm(blogData[0]));
       }
     } catch (err) {
       setError(err?.response?.data?.error || err?.message || 'Không thể tải dashboard admin.');
@@ -535,6 +586,119 @@ export default function AdminPage() {
     }
   };
 
+  const slugify = (value) => (
+    (value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
+  );
+
+  const handleCreateBlogDraft = () => {
+    resetFeedbackState();
+    setBlogForm(EMPTY_BLOG);
+  };
+
+  const handleSelectBlog = (item) => {
+    resetFeedbackState();
+    setBlogForm(toBlogForm(item));
+  };
+
+  const saveBlog = async (isCreate) => {
+    if (!user?.googleId) {
+      return;
+    }
+
+    const computedSlug = slugify(blogForm.slug || blogForm.title);
+    if (!computedSlug) {
+      setError('Vui lòng nhập tiêu đề hoặc slug hợp lệ.');
+      return;
+    }
+
+    const payload = {
+      title: blogForm.title,
+      slug: computedSlug,
+      excerpt: blogForm.excerpt,
+      contentHtml: blogForm.contentHtml,
+      coverImageUrl: blogForm.coverImageUrl,
+      sourceName: blogForm.sourceName,
+      seoTitle: blogForm.seoTitle,
+      seoDescription: blogForm.seoDescription,
+      isPublished: Boolean(blogForm.isPublished),
+      publishedAt: blogForm.isPublished && blogForm.publishedAt
+        ? new Date(blogForm.publishedAt).toISOString()
+        : null,
+    };
+
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      if (isCreate) {
+        const created = await createAdminBlog({ googleId: user.googleId, payload });
+        setBlogForm(toBlogForm(created));
+        setSuccess('Tạo bài viết thành công.');
+      } else if (blogForm.id) {
+        const updated = await updateAdminBlog({
+          googleId: user.googleId,
+          blogId: Number(blogForm.id),
+          payload,
+        });
+        setBlogForm(toBlogForm(updated));
+        setSuccess('Cập nhật bài viết thành công.');
+      }
+      await loadAll();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Lưu bài viết thất bại.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const removeBlog = async () => {
+    if (!blogForm.id || !user?.googleId) {
+      return;
+    }
+
+    if (!window.confirm('Xóa bài viết này?')) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+    setSuccess('');
+    try {
+      await deleteAdminBlog({ googleId: user.googleId, blogId: Number(blogForm.id) });
+      setBlogForm(EMPTY_BLOG);
+      setSuccess('Đã xóa bài viết.');
+      await loadAll();
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Xóa bài viết thất bại.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const uploadBlogContentImage = async (file) => {
+    await handleUploadImage(
+      file,
+      (url) => {
+        setBlogForm((prev) => {
+          const content = prev.contentHtml || '';
+          const imageTag = `<p><img src="${url}" alt="Blog image" /></p>`;
+          return {
+            ...prev,
+            contentHtml: content ? `${content}\n${imageTag}` : imageTag,
+          };
+        });
+      },
+      'Ảnh trong nội dung blog'
+    );
+  };
+
   const changeOrderStatus = async (orderId, status) => {
     if (!user?.googleId) {
       return;
@@ -608,7 +772,7 @@ export default function AdminPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 bg-brand-cream rounded-xl p-1">
-        {['products', 'authors', 'audiobooks', 'orders', 'users'].map((key) => (
+        {['products', 'authors', 'audiobooks', 'blogs', 'orders', 'users'].map((key) => (
           <button
             key={key}
             type="button"
@@ -831,6 +995,159 @@ export default function AdminPage() {
               <label className="inline-flex items-center gap-2 font-san text-sm"><input type="checkbox" checked={audiobookForm.isActive} onChange={(e) => setAudiobookForm((v) => ({ ...v, isActive: e.target.checked }))} /> Active</label>
             </div>
             <button type="button" disabled={isSaving || !selectedAudiobook} onClick={saveAudiobook} className="px-4 py-2 bg-brand-navy text-white rounded-lg font-san text-sm disabled:opacity-50">Cập nhật audiobook</button>
+          </div>
+        </div>
+      )}
+
+      {tab === 'blogs' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="bg-white rounded-2xl p-4 shadow-sm">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="font-golan text-lg">Blogs</h2>
+              <button type="button" className="text-brand-navy" onClick={handleCreateBlogDraft}><Plus size={18} /></button>
+            </div>
+            <div className="space-y-2 max-h-[560px] overflow-auto">
+              {blogs.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleSelectBlog(item)}
+                  className={`w-full text-left rounded-xl p-3 border ${String(blogForm.id) === String(item.id) ? 'border-brand-amber bg-brand-amber/5' : 'border-brand-cream-dark'}`}
+                >
+                  <p className="font-san text-sm font-semibold line-clamp-2">{item.title}</p>
+                  <p className="font-san text-xs text-brand-muted mt-1">
+                    /{item.slug} {item.isPublished ? '· Published' : '· Draft'}
+                  </p>
+                </button>
+              ))}
+              {blogs.length === 0 && (
+                <p className="font-san text-sm text-brand-muted">Chưa có bài viết nào.</p>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm lg:col-span-2 space-y-3">
+            <h2 className="font-golan text-lg">Tạo/Cập nhật bài viết</h2>
+
+            <input
+              value={blogForm.title}
+              onChange={(e) => setBlogForm((v) => ({ ...v, title: e.target.value }))}
+              placeholder="Tiêu đề bài viết"
+              className="w-full border rounded-lg px-3 py-2 font-san text-sm"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                value={blogForm.slug}
+                onChange={(e) => setBlogForm((v) => ({ ...v, slug: e.target.value }))}
+                placeholder="Slug (vd: bai-viet-seo-lumier)"
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+              <input
+                value={blogForm.sourceName}
+                onChange={(e) => setBlogForm((v) => ({ ...v, sourceName: e.target.value }))}
+                placeholder="Nguồn hiển thị (vd: Lumier, BaiLearn)"
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+              <input
+                value={blogForm.coverImageUrl}
+                onChange={(e) => setBlogForm((v) => ({ ...v, coverImageUrl: e.target.value }))}
+                placeholder="URL ảnh bìa"
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+              <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer font-san text-sm">
+                <Upload size={16} /> Upload ảnh bìa
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => setBlogForm((v) => ({ ...v, coverImageUrl: url })), 'Ảnh bìa blog')}
+                />
+              </label>
+            </div>
+
+            <textarea
+              rows={3}
+              value={blogForm.excerpt}
+              onChange={(e) => setBlogForm((v) => ({ ...v, excerpt: e.target.value }))}
+              placeholder="Mô tả ngắn"
+              className="w-full border rounded-lg px-3 py-2 font-san text-sm"
+            />
+
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
+              <textarea
+                rows={11}
+                value={blogForm.contentHtml}
+                onChange={(e) => setBlogForm((v) => ({ ...v, contentHtml: e.target.value }))}
+                placeholder="Nội dung HTML của blog"
+                className="w-full border rounded-lg px-3 py-2 font-san text-sm"
+              />
+              <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer font-san text-sm">
+                <Upload size={16} /> Upload ảnh vào nội dung
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => uploadBlogContentImage(e.target.files?.[0])}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <input
+                value={blogForm.seoTitle}
+                onChange={(e) => setBlogForm((v) => ({ ...v, seoTitle: e.target.value }))}
+                placeholder="SEO title (optional)"
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+              <input
+                value={blogForm.seoDescription}
+                onChange={(e) => setBlogForm((v) => ({ ...v, seoDescription: e.target.value }))}
+                placeholder="SEO description (optional)"
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <label className="inline-flex items-center gap-2 font-san text-sm">
+                <input
+                  type="checkbox"
+                  checked={blogForm.isPublished}
+                  onChange={(e) => setBlogForm((v) => ({ ...v, isPublished: e.target.checked }))}
+                />
+                Published
+              </label>
+              <input
+                type="datetime-local"
+                value={blogForm.publishedAt}
+                onChange={(e) => setBlogForm((v) => ({ ...v, publishedAt: e.target.value }))}
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => saveBlog(!blogForm.id)}
+                className="px-4 py-2 bg-brand-navy text-white rounded-lg font-san text-sm disabled:opacity-50"
+              >
+                {blogForm.id ? 'Cập nhật' : 'Tạo mới'}
+              </button>
+              {selectedBlog && (
+                <button
+                  type="button"
+                  disabled={isSaving}
+                  onClick={removeBlog}
+                  className="px-4 py-2 border border-red-300 text-red-600 rounded-lg font-san text-sm inline-flex items-center gap-1"
+                >
+                  <Trash2 size={14} /> Xóa
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
