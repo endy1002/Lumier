@@ -1,8 +1,11 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { BRAND } from '../../config/constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function HeroSection() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative overflow-hidden bg-white">
       <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_42%_46%,_rgba(242,169,0,0.16)_0%,_rgba(242,169,0,0.08)_26%,_rgba(255,255,255,1)_62%)]" />
@@ -41,18 +44,21 @@ export default function HeroSection() {
               LUMIER
             </h1>
             <h2 className="font-heading text-2xl md:text-3xl text-brand-charcoal italic mb-6 drop-shadow-[0_1px_0_rgba(255,255,255,0.45)]">
-              "Chạm tri thức, rực bản nguyên"
+              "{t('Chạm tri thức, rực bản nguyên', 'Touch knowledge, ignite your essence.')}"
             </h2>
 
             <p className="font-san text-base md:text-[17px] text-brand-charcoal/78 leading-relaxed mb-8 max-w-xl">
-              Vượt xa một món phụ kiện trang trí thông thường, Book Charm là sự giao thoa giữa thẩm mỹ cá nhân và giá trị tri thức. Với kích thước vừa vặn trong lòng bàn tay, món đồ nhỏ nhắn này không chỉ tạo điểm nhấn phong cách cho chiếc túi xách, mà còn là một “tín hiệu ngầm” giúp bạn kết nối với những tâm hồn đồng điệu. Đó là cách đầy tinh tế để bạn khẳng định gu đọc sách và tự hào chia sẻ về những tác phẩm mình tâm đắc.
+              {t(
+                'Vượt xa một món phụ kiện trang trí thông thường, Book Charm là sự giao thoa giữa thẩm mỹ cá nhân và giá trị tri thức. Với kích thước vừa vặn trong lòng bàn tay, món đồ nhỏ nhắn này không chỉ tạo điểm nhấn phong cách cho chiếc túi xách, mà còn là một “tín hiệu ngầm” giúp bạn kết nối với những tâm hồn đồng điệu. Đó là cách đầy tinh tế để bạn khẳng định gu đọc sách và tự hào chia sẻ về những tác phẩm mình tâm đắc.',
+                'More than a decorative accessory, Book Charm blends personal aesthetics with the value of knowledge. Compact enough to fit in your palm, it not only adds a stylish accent to your bag but also acts as a subtle signal that connects you with like-minded readers. It is an elegant way to express your reading taste and proudly share the books you truly love.'
+              )}
             </p>
 
             <Link
               to="/san-pham"
               className="inline-flex items-center gap-3 bg-brand-navy hover:bg-brand-deep-blue text-white font-san font-medium px-8 py-4 rounded-full transition-all duration-300 hover:shadow-xl hover:shadow-brand-navy/20 group"
             >
-              <span>Khám phá ngay</span>
+              <span>{t('Khám phá ngay', 'Explore now')}</span>
               <ArrowRight
                 size={18}
                 className="transition-transform group-hover:translate-x-1"

@@ -5,6 +5,7 @@ import BookshelfUI from '../components/products/BookshelfUI';
 import ProductRanking from '../components/products/ProductRanking';
 import CustomizePopup from '../components/products/CustomizePopup';
 import { useCart } from '../context/CartContext';
+import { useLanguage } from '../context/LanguageContext';
 import { fetchProducts } from '../services/products';
 
 const SELECTION_DRAFT_KEY = 'lumier-products-selection-draft';
@@ -40,6 +41,7 @@ export default function ProductsPage() {
   const [searchParams] = useSearchParams();
   const { showToast } = useOutletContext();
   const { addItem } = useCart();
+  const { t, formatCurrency } = useLanguage();
   const navigate = useNavigate();
 
   const [selectedItems, setSelectedItems] = useState([]);
@@ -74,7 +76,12 @@ export default function ProductsPage() {
       } catch {
         if (mounted) {
           setProducts([]);
-          showToast('Không thể tải danh sách sản phẩm từ hệ thống.');
+          showToast(
+            t(
+              'Không thể tải danh sách sản phẩm từ hệ thống.',
+              'Unable to load product list from the system.'
+            )
+          );
         }
       } finally {
         if (mounted) {
@@ -255,7 +262,13 @@ export default function ProductsPage() {
       }
     });
 
-    showToast(`Đã thêm ${totalSelectedCount} sản phẩm vào giỏ hàng!`);
+    showToast(
+      t(
+        'Đã thêm {count} sản phẩm vào giỏ hàng!',
+        'Added {count} items to cart!',
+        { count: totalSelectedCount }
+      )
+    );
     setSelectedItems([]);
     setPendingProduct(null);
     setShowSelectionModal(false);
@@ -266,10 +279,13 @@ export default function ProductsPage() {
       {/* Page header */}
       <div className="mb-10">
         <h1 className="font-golan text-3xl md:text-4xl font-bold text-brand-charcoal mb-3">
-          Sản phẩm
+          {t('Sản phẩm', 'Products')}
         </h1>
         <p className="font-san text-sm text-brand-muted">
-          Khám phá kệ sách Lumier — nơi mỗi cuốn sách là một tác phẩm nghệ thuật
+          {t(
+            'Khám phá kệ sách Lumier — nơi mỗi cuốn sách là một tác phẩm nghệ thuật',
+            'Explore the Lumier bookshelf, where every book becomes a crafted artwork.'
+          )}
         </p>
       </div>
 
@@ -281,7 +297,10 @@ export default function ProductsPage() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Tìm nhanh sản phẩm ngay trong kệ sách..."
+            placeholder={t(
+              'Tìm nhanh sản phẩm ngay trong kệ sách...',
+              'Quick search products right from the shelf...'
+            )}
             className="w-full rounded-2xl border-2 border-brand-cream-dark bg-white py-3.5 pl-11 pr-4 font-san text-sm"
           />
         </div>
@@ -291,9 +310,13 @@ export default function ProductsPage() {
       {shouldCustomize && searchQuery && (
         <div className="bg-brand-amber/10 border border-brand-amber/30 rounded-xl px-5 py-4 mb-8">
           <p className="font-san text-sm text-brand-charcoal">
-            Sản phẩm "<strong>{searchQuery}</strong>" đang tìm không có sẵn.{' '}
+            {t(
+              'Sản phẩm "{q}" đang tìm không có sẵn.',
+              'The product "{q}" is not available right now.',
+              { q: searchQuery }
+            )}{' '}
             <span className="text-brand-amber font-medium">
-              Cùng customize nhé! ✨
+              {t('Cùng customize nhé! ✨', "Let's customize one! ✨")}
             </span>
           </p>
         </div>
@@ -304,7 +327,9 @@ export default function ProductsPage() {
         {/* Bookshelf */}
         {productsLoading ? (
           <div className="rounded-2xl border border-brand-cream-dark bg-white p-8 text-center">
-            <p className="font-san text-sm text-brand-muted">Đang tải sản phẩm...</p>
+            <p className="font-san text-sm text-brand-muted">
+              {t('Đang tải sản phẩm...', 'Loading products...')}
+            </p>
           </div>
         ) : (
           <BookshelfUI
@@ -327,47 +352,52 @@ export default function ProductsPage() {
       {/* === Pricing Table === */}
       <div className="mt-6 bg-white rounded-2xl p-8 shadow-sm mb-24">
         <h2 className="font-golan text-2xl font-bold text-brand-charcoal mb-6">
-          Bảng Giá
+          {t('Bảng Giá', 'Pricing Table')}
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full font-san text-sm">
             <thead>
               <tr className="border-b-2 border-brand-cream-dark">
                 <th className="text-left py-3 px-4 font-semibold text-brand-charcoal uppercase tracking-wider text-xs">
-                  Phân loại
+                  {t('Phân loại', 'Category')}
                 </th>
                 <th className="text-right py-3 px-4 font-semibold text-brand-charcoal uppercase tracking-wider text-xs">
-                  Giá
+                  {t('Giá', 'Price')}
                 </th>
                 <th className="text-left py-3 px-4 font-semibold text-brand-charcoal uppercase tracking-wider text-xs">
-                  Chú thích
+                  {t('Chú thích', 'Notes')}
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b border-brand-cream">
-                <td className="py-3 px-4">Sách có sẵn</td>
+                <td className="py-3 px-4">{t('Sách có sẵn', 'Ready-made Bookcharm')}</td>
                 <td className="py-3 px-4 text-right font-semibold text-brand-amber">
-                  150.000đ
-                </td>
-                <td className="py-3 px-4 text-brand-muted">Bookcharm với bìa có sẵn</td>
-              </tr>
-              <tr className="border-b border-brand-cream">
-                <td className="py-3 px-4">Sách tự tay lựa</td>
-                <td className="py-3 px-4 text-right font-semibold text-brand-amber">
-                  200.000đ
+                  {formatCurrency(100000)}
                 </td>
                 <td className="py-3 px-4 text-brand-muted">
-                  Upload hoặc chọn bìa tùy ý (+50.000đ)
+                  {t('Bookcharm với bìa có sẵn', 'Bookcharm with ready-made cover')}
+                </td>
+              </tr>
+              <tr className="border-b border-brand-cream">
+                <td className="py-3 px-4">{t('Sách tự tay lựa', 'Custom Cover Bookcharm')}</td>
+                <td className="py-3 px-4 text-right font-semibold text-brand-amber">
+                  {formatCurrency(150000)}
+                </td>
+                <td className="py-3 px-4 text-brand-muted">
+                  {t(
+                    'Upload hoặc chọn bìa tùy ý (+50.000đ)',
+                    'Upload or pick your own cover (+50,000 VND)'
+                  )}
                 </td>
               </tr>
               <tr>
-                <td className="py-3 px-4">Customize khác</td>
+                <td className="py-3 px-4">{t('Customize khác', 'Other customization')}</td>
                 <td className="py-3 px-4 text-right font-semibold text-brand-amber">
-                  50.000đ/lần
+                  {t('50.000đ/lần', '50,000 VND / option')}
                 </td>
                 <td className="py-3 px-4 text-brand-muted">
-                  Khắc tên, chọn màu gáy...
+                  {t('Khắc tên, chọn màu gáy...', 'Name engraving, spine color, and more...')}
                 </td>
               </tr>
             </tbody>
@@ -379,11 +409,18 @@ export default function ProductsPage() {
       {showCustomizePopup && pendingProduct && (
         <CustomizePopup
           product={pendingProduct}
-          title="Tùy chỉnh những dấu ấn riêng của bạn chứ?"
-          description={`${pendingProduct.name} sẽ nổi bật hơn nếu bạn cá nhân hóa ngay bây giờ.`}
-          acceptLabel="Đồng ý"
-          declineLabel="Để sau"
-          hintText="Bạn vẫn có thể thêm bản mặc định vào danh sách Đang chọn và xác nhận ở bước cuối"
+          title={t('Tùy chỉnh những dấu ấn riêng của bạn chứ?', 'Do you want to personalize this item?')}
+          description={t(
+            '{name} sẽ nổi bật hơn nếu bạn cá nhân hóa ngay bây giờ.',
+            '{name} will stand out even more with your personal touch.',
+            { name: pendingProduct.name }
+          )}
+          acceptLabel={t('Đồng ý', 'Yes')}
+          declineLabel={t('Để sau', 'Maybe later')}
+          hintText={t(
+            'Bạn vẫn có thể thêm bản mặc định vào danh sách Đang chọn và xác nhận ở bước cuối',
+            'You can still keep the default version in your selection and confirm at the final step.'
+          )}
           onAccept={handleCustomizeAccept}
           onDecline={handleCustomizeDecline}
           onClose={() => {
@@ -397,13 +434,15 @@ export default function ProductsPage() {
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[85] w-[min(96vw,980px)] bg-white/95 backdrop-blur-md border border-brand-cream-dark rounded-2xl shadow-2xl">
           <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="font-san text-xs uppercase tracking-wider text-brand-muted">Đang chọn</p>
+              <p className="font-san text-xs uppercase tracking-wider text-brand-muted">
+                {t('Đang chọn', 'Selected')}
+              </p>
               <p className="font-golan text-lg font-bold text-brand-charcoal">
-                {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
+                {t('{count} sản phẩm', '{count} items', { count: totalSelectedCount })} • {formatCurrency(totalSelectedPrice)}
               </p>
               {charmCustomizationSummary.total > 0 && (
                 <p className="font-san text-xs text-brand-muted mt-0.5">
-                  Charm đã customize: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
+                  {t('Charm đã customize', 'Customized charms')}: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
                 </p>
               )}
             </div>
@@ -413,14 +452,14 @@ export default function ProductsPage() {
                 onClick={() => setShowSelectionModal(true)}
                 className="inline-flex items-center gap-1 px-3 py-2 rounded-xl border border-brand-cream-dark font-san text-xs md:text-sm text-brand-charcoal hover:border-brand-amber"
               >
-                Chi tiết
+                {t('Chi tiết', 'Details')}
               </button>
               <button
                 onClick={handleConfirmAddAll}
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-navy text-white font-san text-xs md:text-sm font-medium hover:bg-brand-deep-blue"
               >
                 <ShoppingBag size={14} />
-                Xác nhận thêm vào giỏ
+                {t('Xác nhận thêm vào giỏ', 'Confirm add to cart')}
               </button>
             </div>
           </div>
@@ -437,13 +476,15 @@ export default function ProductsPage() {
           <div className="relative bg-white rounded-2xl border border-brand-cream-dark shadow-2xl w-[min(96vw,920px)] max-h-[86vh] overflow-hidden">
             <div className="px-5 py-4 border-b border-brand-cream-dark flex items-center justify-between">
               <div>
-                <p className="font-san text-xs uppercase tracking-wider text-brand-muted">Đang chọn</p>
+                <p className="font-san text-xs uppercase tracking-wider text-brand-muted">
+                  {t('Đang chọn', 'Selected')}
+                </p>
                 <p className="font-golan text-lg font-bold text-brand-charcoal">
-                  {totalSelectedCount} sản phẩm • {totalSelectedPrice.toLocaleString('vi-VN')}đ
+                  {t('{count} sản phẩm', '{count} items', { count: totalSelectedCount })} • {formatCurrency(totalSelectedPrice)}
                 </p>
                 {charmCustomizationSummary.total > 0 && (
                   <p className="font-san text-xs text-brand-muted mt-0.5">
-                    Charm đã customize: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
+                    {t('Charm đã customize', 'Customized charms')}: {charmCustomizationSummary.customized}/{charmCustomizationSummary.total}
                   </p>
                 )}
               </div>
@@ -478,7 +519,7 @@ export default function ProductsPage() {
                       <div className="min-w-0">
                         <p className="font-san text-sm font-medium text-brand-charcoal truncate">{entry.product.name}</p>
                         <p className="font-san text-xs text-brand-muted">
-                          {entry.product.basePrice.toLocaleString('vi-VN')}đ / sản phẩm
+                          {formatCurrency(entry.product.basePrice)} / {t('sản phẩm', 'item')}
                         </p>
                         {entry.product.category === 'CHARM' && (
                           <span
@@ -488,7 +529,7 @@ export default function ProductsPage() {
                                 : 'bg-amber-50 text-amber-700 border border-amber-200'
                             }`}
                           >
-                            {entry.customization ? 'Đã customize' : 'Chưa customize'}
+                            {entry.customization ? t('Đã customize', 'Customized') : t('Chưa customize', 'Not customized yet')}
                           </span>
                         )}
                         {entry.product.category === 'CHARM' && (
@@ -534,14 +575,14 @@ export default function ProductsPage() {
                 onClick={() => setShowSelectionModal(false)}
                 className="px-4 py-2.5 rounded-xl border border-brand-cream-dark font-san text-sm text-brand-charcoal"
               >
-                Đóng
+                {t('Đóng', 'Close')}
               </button>
               <button
                 onClick={handleConfirmAddAll}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-brand-navy text-white font-san text-sm font-medium hover:bg-brand-deep-blue"
               >
                 <ShoppingBag size={14} />
-                Xác nhận thêm vào giỏ
+                {t('Xác nhận thêm vào giỏ', 'Confirm add to cart')}
               </button>
             </div>
           </div>

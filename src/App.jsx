@@ -11,6 +11,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import AccountPage from './pages/AccountPage';
 import NotFoundPage from './pages/NotFoundPage';
 import CustomizationPage from './pages/CustomizationPage';
+import AdminPage from './pages/AdminPage';
 
 function AppContent() {
   // Capture UTM params on first load
@@ -26,6 +27,7 @@ function AppContent() {
         <Route path="bai-viet" element={<NotFoundPage />} />
         <Route path="thanh-toan" element={<CheckoutPage />} />
         <Route path="tai-khoan" element={<AccountPage />} />
+        <Route path="admin" element={<AdminPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Route>
     </Routes>

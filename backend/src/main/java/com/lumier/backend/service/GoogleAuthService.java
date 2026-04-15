@@ -69,7 +69,8 @@ public class GoogleAuthService {
       persisted.getPicture(),
       persisted.getPhone(),
       persisted.getShippingAddress(),
-      persisted.isMarketingOptIn()
+      persisted.isMarketingOptIn(),
+      persisted.getRole()
     );
 
     return new GoogleAuthResponse(user);

@@ -7,6 +7,7 @@ public record ExploreAuthorResponse(
   String name,
   String bio,
   String avatarUrl,
-  List<String> works
+  List<String> works,
+  List<String> infoImages
 ) {
 }

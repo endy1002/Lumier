@@ -1,6 +1,10 @@
 spring:
   application:
     name: lumier-backend
+  servlet:
+    multipart:
+      max-file-size: ${MEDIA_MAX_FILE_SIZE:200MB}
+      max-request-size: ${MEDIA_MAX_REQUEST_SIZE:200MB}
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/lumier?sslmode=disable}
     username: ${DB_USERNAME:postgres}
@@ -27,3 +31,14 @@ app:
   auth:
     google:
       client-id: ${GOOGLE_CLIENT_ID:}
+    admin-emails: ${ADMIN_EMAILS:}
+  media:
+    upload-dir: ${MEDIA_UPLOAD_DIR:backend/uploads}
+  supabase:
+    enabled: ${SUPABASE_STORAGE_ENABLED:false}
+    url: ${SUPABASE_URL:}
+    service-role-key: ${SUPABASE_SERVICE_ROLE_KEY:}
+    bucket: ${SUPABASE_STORAGE_BUCKET:lumier-media}
+    public-base-url: ${SUPABASE_STORAGE_PUBLIC_BASE_URL:}
+    request-timeout-seconds: ${SUPABASE_STORAGE_REQUEST_TIMEOUT_SECONDS:180}
+    allow-local-fallback: ${SUPABASE_STORAGE_ALLOW_LOCAL_FALLBACK:false}

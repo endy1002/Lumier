@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search as SearchIcon, X } from 'lucide-react';
 import { fetchProducts } from '../../services/products';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function SearchBar({ onClose, onNavigate }) {
+  const { t, locale, formatCurrency } = useLanguage();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [products, setProducts] = useState([]);
@@ -90,7 +92,7 @@ export default function SearchBar({ onClose, onNavigate }) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Tìm kiếm sách, bookcharm..."
+              placeholder={t('Tìm kiếm sách, bookcharm...', 'Search books, bookcharms...')}
               className="flex-1 font-san text-sm bg-transparent border-none outline-none focus:outline-none focus:ring-0 !shadow-none placeholder:text-brand-muted"
             />
             {query && (
@@ -107,7 +109,7 @@ export default function SearchBar({ onClose, onNavigate }) {
               onClick={onClose}
               className="text-brand-muted hover:text-brand-charcoal ml-2 text-sm font-san"
             >
-              Đóng
+              {t('Đóng', 'Close')}
             </button>
           </div>
 
@@ -137,7 +139,7 @@ export default function SearchBar({ onClose, onNavigate }) {
                     </p>
                     <p className="font-san text-xs text-brand-muted">
                       {product.category} •{' '}
-                      {product.basePrice.toLocaleString('vi-VN')}đ
+                      {formatCurrency(product.basePrice)}
                     </p>
                   </div>
                 </button>
@@ -149,7 +151,7 @@ export default function SearchBar({ onClose, onNavigate }) {
           {query.trim().length >= 2 && results.length === 0 && (
             <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-lg p-4 z-50">
               <p className="font-san text-sm text-brand-muted text-center">
-                Không tìm thấy sản phẩm.{' '}
+                {t('Không tìm thấy sản phẩm.', 'No matching product found.')}{' '}
                 <button
                   type="button"
                   onClick={() =>
@@ -161,7 +163,7 @@ export default function SearchBar({ onClose, onNavigate }) {
                   }
                   className="text-brand-amber font-medium hover:underline"
                 >
-                  Cùng customize nhé!
+                  {t('Cùng customize nhé!', "Let's customize it!")}
                 </button>
               </p>
             </div>

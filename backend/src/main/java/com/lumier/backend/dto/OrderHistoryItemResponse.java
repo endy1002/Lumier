@@ -1,6 +1,7 @@
 package com.lumier.backend.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public record OrderHistoryItemResponse(
   Long id,
@@ -12,6 +13,8 @@ public record OrderHistoryItemResponse(
   String engravedText,
   String hardwareType,
   Boolean hasExtraChain,
-  boolean hasUploadedCover
+  boolean hasUploadedCover,
+  boolean hasAudiobookCode,
+  List<String> audiobookCodes
 ) {
 }

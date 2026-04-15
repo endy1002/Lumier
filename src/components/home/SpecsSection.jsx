@@ -1,7 +1,14 @@
 import { useScrollReveal } from '../../hooks/useScrollReveal';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function SpecsSection() {
   const [ref, isVisible] = useScrollReveal();
+  const { t } = useLanguage();
+
+  const fallbackTitle = t('Thông số sản phẩm', 'Product specifications');
+  const fallbackSize = t('Kích thước: 10cm x 5.5cm x 2.5cm', 'Dimensions: 10cm x 5.5cm x 2.5cm');
+  const fallbackWeight = t('Trọng lượng: 450g', 'Weight: 450g');
+  const fallbackMaterial = t('Chất liệu: Polymer cao cấp', 'Material: Premium polymer');
 
   return (
     <section className="py-20 bg-white relative overflow-hidden">
@@ -23,11 +30,11 @@ export default function SpecsSection() {
                   e.target.parentElement.innerHTML = `
                     <div class="flex flex-col items-center justify-center h-full p-8 text-center">
                       <div class="text-5xl mb-4">📐</div>
-                      <p class="font-golan text-xl text-brand-navy mb-2">Thông số sản phẩm</p>
+                      <p class="font-golan text-xl text-brand-navy mb-2">${fallbackTitle}</p>
                       <div class="space-y-2 mt-4 font-san text-sm text-brand-muted">
-                        <p>Kích thước: 10cm x 5.5cm x 2.5cm</p>
-                        <p>Trọng lượng: 450g</p>
-                        <p>Chất liệu: Polymer cao cấp</p>
+                        <p>${fallbackSize}</p>
+                        <p>${fallbackWeight}</p>
+                        <p>${fallbackMaterial}</p>
                       </div>
                     </div>
                   `;
@@ -38,9 +45,9 @@ export default function SpecsSection() {
             {/* Size annotation overlay */}
             <div className="absolute bottom-4 left-4 right-4 bg-brand-navy shadow-xl backdrop-blur-sm rounded-xl p-4">
               <p className="font-san text-sm text-white/90 text-center font-medium">
-                <span className="font-bold text-white">Kích thước:</span>{' '}
+                <span className="font-bold text-white">{t('Kích thước:', 'Dimensions:')}</span>{' '}
                 10cm × 5.5cm × 2.5cm •{' '}
-                <span className="font-bold text-white">Trọng lượng:</span>{' '}
+                <span className="font-bold text-white">{t('Trọng lượng:', 'Weight:')}</span>{' '}
                 450g
               </p>
             </div>
@@ -49,24 +56,25 @@ export default function SpecsSection() {
           {/* Right: Description text */}
           <div>
             <p className="font-san text-sm uppercase tracking-widest text-brand-amber mb-4">
-              Vẻ đẹp không cần đánh đổi bởi sự thuận tiện
+              {t('Vẻ đẹp không cần đánh đổi bởi sự thuận tiện', 'Beauty without compromising convenience')}
             </p>
             <h2 className="font-golan text-3xl md:text-4xl font-bold text-brand-charcoal leading-snug mb-6">
-              Với kích thước chỉ vỏn vẹn{' '}
+              {t('Với kích thước chỉ vỏn vẹn', 'With a compact size of')}{' '}
               <span className="text-brand-navy block text-center mt-4 text-4xl md:text-5xl border-y py-4 border-brand-cream-dark shadow-sm bg-brand-cream/30 rounded-2xl">10cm × 5.5cm × 2.5cm</span>
             </h2>
             <p className="font-san text-base text-brand-charcoal leading-relaxed mb-6">
-              Với kích thước chỉ vỏn vẹn 10cm x 5.5cm x 2.5cm và trọng lượng 450g giúp mọi
-              bước đi của bạn đều thoải mái và nhẹ nhàng. Với lớp phủ polymer đặc biệt giúp
-              ngăn thấm nước, chống bẩn và tăng độ bền cho bìa sách.
+              {t(
+                'Với kích thước chỉ vỏn vẹn 10cm x 5.5cm x 2.5cm và trọng lượng 450g giúp mọi bước đi của bạn đều thoải mái và nhẹ nhàng. Với lớp phủ polymer đặc biệt giúp ngăn thấm nước, chống bẩn và tăng độ bền cho bìa sách.',
+                'At just 10cm x 5.5cm x 2.5cm and only 450g, it keeps every step light and comfortable. A special polymer coating helps resist water, repel dirt, and improve cover durability.'
+              )}
             </p>
 
             {/* Feature bullets */}
             <div className="space-y-4">
               {[
-                { text: 'Siêu nhẹ chỉ 450g — thoải mái mang theo mọi nơi' },
-                { text: 'Phủ polymer chống nước — bảo vệ toàn diện' },
-                { text: 'Thủ công tinh xảo — mỗi sản phẩm là duy nhất' },
+                { text: t('Siêu nhẹ chỉ 450g — thoải mái mang theo mọi nơi', 'Ultra-light at 450g - easy to carry anywhere') },
+                { text: t('Phủ polymer chống nước — bảo vệ toàn diện', 'Water-resistant polymer coating - comprehensive protection') },
+                { text: t('Thủ công tinh xảo — mỗi sản phẩm là duy nhất', 'Handcrafted details - every item is unique') },
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3">
                   <div className="w-1.5 h-1.5 rounded-full bg-brand-amber mt-2 flex-shrink-0" />

@@ -1,5 +1,7 @@
 package com.lumier.backend.dto;
 
+import com.lumier.backend.domain.enums.UserRole;
+
 public record AuthUserResponse(
   String googleId,
   String email,
@@ -7,6 +9,7 @@ public record AuthUserResponse(
   String picture,
   String phone,
   String shippingAddress,
-  boolean marketingOptIn
+  boolean marketingOptIn,
+  UserRole role
 ) {
 }

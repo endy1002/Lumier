@@ -1,44 +1,79 @@
 import { useState } from 'react';
 import { X, Send, MessageCircle } from 'lucide-react';
-
-const QUIZ_QUESTIONS = [
-  {
-    id: 1,
-    question: 'Bạn thích thể loại sách nào nhất?',
-    options: ['Văn học kinh điển', 'Self-help', 'Tiểu thuyết', 'Khoa học', 'Thơ ca'],
-  },
-  {
-    id: 2,
-    question: 'Bạn thường đọc sách vào thời điểm nào?',
-    options: ['Buổi sáng', 'Trưa', 'Chiều tối', 'Trước khi ngủ', 'Bất kỳ lúc nào'],
-  },
-  {
-    id: 3,
-    question: 'Cuốn sách gần nhất bạn đọc là gì?',
-    options: ['Nhà Giả Kim', 'Đắc Nhân Tâm', 'Tôi Thấy Hoa Vàng Trên Cỏ Xanh', 'Tuổi Trẻ Đáng Giá Bao Nhiêu', 'Sách khác'],
-  },
-];
-
-const RECOMMENDATIONS = {
-  'Văn học kinh điển': 'The Classic Rose Bookcharm - phù hợp với gu cổ điển thanh lịch của bạn!',
-  'Self-help': 'The Golden Book Charm - nguồn cảm hứng vàng ròng cho hành trình phát triển bản thân!',
-  'Tiểu thuyết': 'Victoria Library Bookcharm - mang phong cách văn chương lãng mạn!',
-  'Khoa học': 'The Aurelian Archive - kho tàng tri thức dành cho tâm hồn khám phá!',
-  'Thơ ca': 'The Midnight Library - vẻ đẹp tĩnh lặng và sâu lắng cho tâm hồn thơ!',
-};
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function ChatbotWidget() {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(0); // 0 = initial, 1-3 = quiz, 4 = email, 5 = result
   const [answers, setAnswers] = useState({});
   const [email, setEmail] = useState('');
   const [showBubble, setShowBubble] = useState(true);
 
+  const quizQuestions = [
+    {
+      id: 1,
+      question: t('Bạn thích thể loại sách nào nhất?', 'Which book genre do you enjoy the most?'),
+      options: [
+        { key: 'classic', label: t('Văn học kinh điển', 'Classic literature') },
+        { key: 'selfhelp', label: 'Self-help' },
+        { key: 'novel', label: t('Tiểu thuyết', 'Novels') },
+        { key: 'science', label: t('Khoa học', 'Science') },
+        { key: 'poetry', label: t('Thơ ca', 'Poetry') },
+      ],
+    },
+    {
+      id: 2,
+      question: t('Bạn thường đọc sách vào thời điểm nào?', 'When do you usually read?'),
+      options: [
+        { key: 'morning', label: t('Buổi sáng', 'Morning') },
+        { key: 'noon', label: t('Trưa', 'Noon') },
+        { key: 'evening', label: t('Chiều tối', 'Evening') },
+        { key: 'before-sleep', label: t('Trước khi ngủ', 'Before sleeping') },
+        { key: 'anytime', label: t('Bất kỳ lúc nào', 'Anytime') },
+      ],
+    },
+    {
+      id: 3,
+      question: t('Cuốn sách gần nhất bạn đọc là gì?', 'What is the latest book you read?'),
+      options: [
+        { key: 'alchemist', label: t('Nhà Giả Kim', 'The Alchemist') },
+        { key: 'how-to-win', label: t('Đắc Nhân Tâm', 'How to Win Friends and Influence People') },
+        { key: 'yellow-flowers', label: t('Tôi Thấy Hoa Vàng Trên Cỏ Xanh', 'Yellow Flowers on the Green Grass') },
+        { key: 'youth-worth', label: t('Tuổi Trẻ Đáng Giá Bao Nhiêu', 'How Much Is Youth Worth?') },
+        { key: 'other', label: t('Sách khác', 'Other book') },
+      ],
+    },
+  ];
+
+  const recommendations = {
+    classic: t(
+      'The Classic Rose Bookcharm - phù hợp với gu cổ điển thanh lịch của bạn!',
+      'The Classic Rose Bookcharm - perfect for your elegant classic taste!'
+    ),
+    selfhelp: t(
+      'The Golden Book Charm - nguồn cảm hứng vàng ròng cho hành trình phát triển bản thân!',
+      'The Golden Book Charm - a golden spark for your self-growth journey!'
+    ),
+    novel: t(
+      'Victoria Library Bookcharm - mang phong cách văn chương lãng mạn!',
+      'Victoria Library Bookcharm - crafted for your romantic literary vibe!'
+    ),
+    science: t(
+      'The Aurelian Archive - kho tàng tri thức dành cho tâm hồn khám phá!',
+      'The Aurelian Archive - a treasury of knowledge for curious minds!'
+    ),
+    poetry: t(
+      'The Midnight Library - vẻ đẹp tĩnh lặng và sâu lắng cho tâm hồn thơ!',
+      'The Midnight Library - quiet and profound beauty for poetic souls!'
+    ),
+  };
+
   const handleAnswer = (questionId, answer) => {
     const newAnswers = { ...answers, [questionId]: answer };
     setAnswers(newAnswers);
 
-    if (step < QUIZ_QUESTIONS.length) {
+    if (step < quizQuestions.length) {
       setStep(step + 1);
     } else {
       setStep(4); // Go to email step
@@ -55,8 +90,8 @@ export default function ChatbotWidget() {
   };
 
   const getRecommendation = () => {
-    const genre = answers[1] || 'Văn học kinh điển';
-    return RECOMMENDATIONS[genre] || RECOMMENDATIONS['Văn học kinh điển'];
+    const genre = answers[1] || 'classic';
+    return recommendations[genre] || recommendations.classic;
   };
 
   const resetChat = () => {
@@ -74,7 +109,7 @@ export default function ChatbotWidget() {
           <div className="relative bg-white rounded-2xl shadow-xl px-4 py-3 mr-2 max-w-[200px] animate-fade-in-up
                           after:content-[''] after:absolute after:top-[60%] after:-right-[7px] after:-translate-y-1/2 after:border-t-[8px] after:border-t-transparent after:border-b-[8px] after:border-b-transparent after:border-l-[8px] after:border-l-white">
             <p className="font-san text-xl text-brand-charcoal pr-2">
-              Tìm sách đúng gu với LumiAI
+              {t('Tìm sách đúng gu với LumiAI', 'Find your perfect match with LumiAI')}
             </p>
             <button
               onClick={() => setShowBubble(false)}
@@ -137,36 +172,38 @@ export default function ChatbotWidget() {
               <div className="space-y-3">
                 <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
                   <p className="font-san text-sm text-brand-charcoal">
-                    Xin chào! 👋 Mình là trợ lý của Lumier. Để gợi ý bookcharm phù hợp, mình
-                    muốn hỏi bạn vài câu nhé!
+                    {t(
+                      'Xin chào! 👋 Mình là trợ lý của Lumier. Để gợi ý bookcharm phù hợp, mình muốn hỏi bạn vài câu nhé!',
+                      'Hi there! 👋 I am Lumier assistant. To suggest your ideal bookcharm, may I ask you a few quick questions?'
+                    )}
                   </p>
                 </div>
                 <button
                   onClick={() => setStep(1)}
                   className="w-full py-2.5 bg-brand-navy text-white font-san text-sm rounded-xl hover:bg-brand-deep-blue transition-colors"
                 >
-                  Bắt đầu! 🚀
+                  {t('Bắt đầu! 🚀', 'Let us begin! 🚀')}
                 </button>
               </div>
             )}
 
-            {step >= 1 && step <= QUIZ_QUESTIONS.length && (
+            {step >= 1 && step <= quizQuestions.length && (
               <div className="space-y-3">
                 <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
                   <p className="font-san text-sm text-brand-charcoal">
-                    {QUIZ_QUESTIONS[step - 1].question}
+                    {quizQuestions[step - 1].question}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  {QUIZ_QUESTIONS[step - 1].options.map((option) => (
+                  {quizQuestions[step - 1].options.map((option) => (
                     <button
-                      key={option}
+                      key={option.key}
                       onClick={() =>
-                        handleAnswer(QUIZ_QUESTIONS[step - 1].id, option)
+                        handleAnswer(quizQuestions[step - 1].id, option.key)
                       }
                       className="w-full text-left px-4 py-2.5 border border-brand-cream-dark rounded-xl font-san text-sm hover:border-brand-amber hover:bg-brand-amber/5 transition-all"
                     >
-                      {option}
+                      {option.label}
                     </button>
                   ))}
                 </div>
@@ -177,7 +214,10 @@ export default function ChatbotWidget() {
               <div className="space-y-3">
                 <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
                   <p className="font-san text-sm text-brand-charcoal">
-                    Tuyệt vời! Để nhận gợi ý, vui lòng nhập email của bạn nhé 📬
+                    {t(
+                      'Tuyệt vời! Để nhận gợi ý, vui lòng nhập email của bạn nhé 📬',
+                      'Great! To receive your recommendation, please enter your email 📬'
+                    )}
                   </p>
                 </div>
                 <form onSubmit={handleEmailSubmit} className="flex gap-2">
@@ -203,7 +243,7 @@ export default function ChatbotWidget() {
               <div className="space-y-3">
                 <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
                   <p className="font-san text-sm text-brand-charcoal">
-                    🎉 Dựa trên sở thích của bạn, mình gợi ý:
+                    {t('🎉 Dựa trên sở thích của bạn, mình gợi ý:', '🎉 Based on your preferences, here is our pick:')}
                   </p>
                   <p className="font-san text-sm font-semibold text-brand-navy mt-2">
                     {getRecommendation()}
@@ -213,7 +253,7 @@ export default function ChatbotWidget() {
                   onClick={resetChat}
                   className="w-full py-2.5 border border-brand-cream-dark text-brand-charcoal font-san text-sm rounded-xl hover:border-brand-amber transition-colors"
                 >
-                  Thử lại
+                  {t('Thử lại', 'Try again')}
                 </button>
               </div>
             )}

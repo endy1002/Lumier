@@ -9,6 +9,8 @@ public record OrderHistoryResponse(
   String status,
   BigDecimal totalAmount,
   OffsetDateTime createdAt,
-  List<OrderHistoryItemResponse> items
+  List<OrderHistoryItemResponse> items,
+  boolean hasAudiobookCode,
+  List<String> audiobookCodes
 ) {
 }

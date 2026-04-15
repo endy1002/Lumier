@@ -38,27 +38,62 @@ public class AudiobookCodeService {
     }
 
     for (OrderItem item : order.getOrderItems()) {
-      Audiobook audiobook = audiobookRepository.findByProductIdAndIsActiveTrue(item.getProduct().getId())
-        .orElse(null);
-      if (audiobook == null) {
-        continue;
+      issueCodesForOrderItem(order, item, Math.max(1, item.getQuantity()));
+    }
+  }
+
+  @Transactional
+  public void ensureCodesForShippedOrder(CustomerOrder order) {
+    if (order == null || order.getId() == null) {
+      return;
+    }
+
+    if (order.getStatus() == null || !"SHIPPED".equals(order.getStatus().name())) {
+      return;
+    }
+
+    if (order.getCustomerGoogleId() == null || order.getCustomerGoogleId().isBlank()) {
+      return;
+    }
+
+    for (OrderItem item : order.getOrderItems()) {
+      int expectedCount = Math.max(1, item.getQuantity());
+      long existingCount = audiobookAccessCodeRepository.countByOrderItemId(item.getId());
+      int missingCount = (int) Math.max(0, expectedCount - existingCount);
+      if (missingCount > 0) {
+        issueCodesForOrderItem(order, item, missingCount);
       }
+    }
+  }
 
-      int issueCount = Math.max(1, item.getQuantity());
-      for (int i = 0; i < issueCount; i++) {
-        String codeValue = generateUniqueCodeValue();
+  private void issueCodesForOrderItem(CustomerOrder order, OrderItem item, int issueCount) {
+    if (issueCount <= 0) {
+      return;
+    }
 
-        AudiobookAccessCode accessCode = new AudiobookAccessCode();
-        accessCode.setCodeValue(codeValue);
-        accessCode.setCodeNormalized(normalizeCode(codeValue));
-        accessCode.setAudiobook(audiobook);
-        accessCode.setOrder(order);
-        accessCode.setOrderItem(item);
-        accessCode.setIssuedToGoogleId(order.getCustomerGoogleId());
-        accessCode.setIssuedAt(OffsetDateTime.now());
+    if (item == null || item.getProduct() == null || item.getProduct().getId() == null) {
+      return;
+    }
 
-        audiobookAccessCodeRepository.save(accessCode);
-      }
+    Audiobook audiobook = audiobookRepository.findByProductIdAndIsActiveTrue(item.getProduct().getId())
+      .orElse(null);
+    if (audiobook == null) {
+      return;
+    }
+
+    for (int i = 0; i < issueCount; i++) {
+      String codeValue = generateUniqueCodeValue();
+
+      AudiobookAccessCode accessCode = new AudiobookAccessCode();
+      accessCode.setCodeValue(codeValue);
+      accessCode.setCodeNormalized(normalizeCode(codeValue));
+      accessCode.setAudiobook(audiobook);
+      accessCode.setOrder(order);
+      accessCode.setOrderItem(item);
+      accessCode.setIssuedToGoogleId(order.getCustomerGoogleId());
+      accessCode.setIssuedAt(OffsetDateTime.now());
+
+      audiobookAccessCodeRepository.save(accessCode);
     }
   }
 

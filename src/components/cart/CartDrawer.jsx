@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { X, Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../../context/CartContext';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function CartDrawer({ isOpen, onClose }) {
+  const { t, formatCurrency } = useLanguage();
   const { items, itemCount, subtotal, total, discount, promo, updateQuantity, removeItem } =
     useCart();
 
@@ -24,7 +26,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           <div className="flex items-center gap-2">
             <ShoppingBag size={20} className="text-brand-navy" />
             <h2 className="font-golan text-lg font-bold text-brand-charcoal">
-              Giỏ hàng
+              {t('Giỏ hàng', 'Cart')}
             </h2>
             <span className="bg-brand-amber text-white text-xs font-bold px-2 py-0.5 rounded-full">
               {itemCount}
@@ -44,13 +46,13 @@ export default function CartDrawer({ isOpen, onClose }) {
             <div className="flex flex-col items-center justify-center h-full text-center">
               <ShoppingBag size={48} className="text-brand-cream-dark mb-4" />
               <p className="font-san text-sm text-brand-muted mb-4">
-                Giỏ hàng trống
+                {t('Giỏ hàng trống', 'Your cart is empty')}
               </p>
               <button
                 onClick={onClose}
                 className="font-san text-sm text-brand-amber hover:underline"
               >
-                Tiếp tục mua sắm
+                {t('Tiếp tục mua sắm', 'Continue shopping')}
               </button>
             </div>
           ) : (
@@ -81,11 +83,11 @@ export default function CartDrawer({ isOpen, onClose }) {
                     </h4>
                     {item.customization && (
                       <p className="font-san text-[10px] text-brand-blue mt-0.5">
-                        ✨ Đã customize
+                        ✨ {t('Đã customize', 'Customized')}
                       </p>
                     )}
                     <p className="font-san text-sm font-bold text-brand-amber mt-1">
-                      {item.unitPrice.toLocaleString('vi-VN')}đ
+                      {formatCurrency(item.unitPrice)}
                     </p>
 
                     {/* Quantity controls */}
@@ -127,27 +129,27 @@ export default function CartDrawer({ isOpen, onClose }) {
         {items.length > 0 && (
           <div className="border-t border-brand-cream-dark px-6 py-4 space-y-3">
             <div className="flex justify-between font-san text-sm">
-              <span className="text-brand-muted">Tạm tính:</span>
+              <span className="text-brand-muted">{t('Tạm tính', 'Subtotal')}:</span>
               <span className="text-brand-charcoal">
-                {subtotal.toLocaleString('vi-VN')}đ
+                {formatCurrency(subtotal)}
               </span>
             </div>
 
             {promo && (
               <div className="flex justify-between font-san text-sm">
-                <span className="text-green-600">Giảm giá ({promo.code}):</span>
+                <span className="text-green-600">{t('Giảm giá', 'Discount')} ({promo.code}):</span>
                 <span className="text-green-600">
-                  -{discount.toLocaleString('vi-VN')}đ
+                  -{formatCurrency(discount)}
                 </span>
               </div>
             )}
 
             <div className="flex justify-between items-center pt-2 border-t border-brand-cream-dark">
               <span className="font-san text-sm font-semibold text-brand-charcoal">
-                Tổng cộng:
+                {t('Tổng cộng', 'Total')}:
               </span>
               <span className="font-golan text-xl font-bold text-brand-amber">
-                {total.toLocaleString('vi-VN')}đ
+                {formatCurrency(total)}
               </span>
             </div>
 
@@ -156,7 +158,7 @@ export default function CartDrawer({ isOpen, onClose }) {
               onClick={onClose}
               className="block w-full text-center py-3.5 bg-brand-navy text-white font-san font-medium rounded-xl hover:bg-brand-deep-blue transition-colors"
             >
-              Thanh toán
+              {t('Thanh toán', 'Checkout')}
             </Link>
           </div>
         )}

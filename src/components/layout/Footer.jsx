@@ -1,8 +1,18 @@
 import { Link } from 'react-router-dom';
 import { Facebook, Instagram, Mail } from 'lucide-react';
 import { BRAND } from '../../config/constants';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function Footer() {
+  const { t } = useLanguage();
+
+  const footerLinks = [
+    { label: t('Trang chủ', 'Home'), path: '/' },
+    { label: t('Sản phẩm', 'Products'), path: '/san-pham' },
+    { label: t('Khám phá', 'Explore'), path: '/kham-pha' },
+    { label: t('Bài viết', 'Articles'), path: '/bai-viet' },
+  ];
+
   return (
     <footer className="bg-brand-navy text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -13,7 +23,10 @@ export default function Footer() {
               {BRAND.name}
             </h3>
             <p className="font-san text-sm text-gray-400 leading-relaxed mb-6">
-              Con người dù ít, dù nhiều chắc chắn vẫn có những cuốn sách yêu thích, những cuốn sách “gối đầu giường” cho riêng mình. Nó có thể định hình được cách cư xử, nhân sinh quan, hay đến cả mindset, skillset của bản thân.
+              {t(
+                'Con người dù ít, dù nhiều chắc chắn vẫn có những cuốn sách yêu thích, những cuốn sách “gối đầu giường” cho riêng mình. Nó có thể định hình được cách cư xử, nhân sinh quan, hay đến cả mindset, skillset của bản thân.',
+                'Everyone has their own favorite books, their own "bedside" books. They can shape our behavior, worldview, and even mindset and skillset.'
+              )}
             </p>
             <div className="flex gap-4">
               <a
@@ -51,20 +64,16 @@ export default function Footer() {
           {/* Links column */}
           <div>
             <h4 className="font-san text-sm font-semibold uppercase tracking-wider text-brand-gold mb-4">
-              Liên kết
+              {t('Liên kết', 'Quick links')}
             </h4>
             <ul className="space-y-3">
-              {['Trang chủ', 'Sản phẩm', 'Khám phá', 'Bài viết'].map((item) => (
-                <li key={item}>
+              {footerLinks.map((item) => (
+                <li key={item.path}>
                   <Link
-                    to={
-                      item === 'Trang chủ'
-                        ? '/'
-                        : `/${item.toLowerCase().replace(/ /g, '-')}`
-                    }
+                    to={item.path}
                     className="font-san text-sm text-gray-400 hover:text-brand-amber transition-colors"
                   >
-                    {item}
+                    {item.label}
                   </Link>
                 </li>
               ))}
@@ -74,18 +83,18 @@ export default function Footer() {
           {/* Support column */}
           <div>
             <h4 className="font-san text-sm font-semibold uppercase tracking-wider text-brand-gold mb-4">
-              Pháp lý
+              {t('Pháp lý', 'Legal')}
             </h4>
             <ul className="space-y-3">
               {[
-                'Chính sách bảo mật',
-                'Điều khoản dịch vụ',
-                'Vận chuyển',
-                'Đổi trả',
-              ].map((item) => (
-                <li key={item}>
+                t('Chính sách bảo mật', 'Privacy Policy'),
+                t('Điều khoản dịch vụ', 'Terms of Service'),
+                t('Vận chuyển', 'Shipping'),
+                t('Đổi trả', 'Returns'),
+              ].map((label) => (
+                <li key={label}>
                   <span className="font-san text-sm text-gray-400 hover:text-brand-amber transition-colors cursor-pointer">
-                    {item}
+                    {label}
                   </span>
                 </li>
               ))}
@@ -95,10 +104,13 @@ export default function Footer() {
           {/* Newsletter column */}
           <div>
             <h4 className="font-san text-sm font-semibold uppercase tracking-wider text-brand-gold mb-4">
-              Đăng ký bản tin
+              {t('Đăng ký bản tin', 'Newsletter')}
             </h4>
             <p className="font-san text-sm text-gray-400 mb-4">
-              Nhận thông báo về các bản sách gốc hẹn xem nhất
+              {t(
+                'Nhận thông báo về các bản sách gốc hẹn xem nhất',
+                'Get updates on new premium editions.'
+              )}
             </p>
             <form
               className="flex gap-2"
@@ -106,14 +118,14 @@ export default function Footer() {
                 e.preventDefault();
                 const input = e.target.querySelector('input');
                 if (input.value) {
-                  alert('Cảm ơn bạn đã đăng ký!');
+                  alert(t('Cảm ơn bạn đã đăng ký!', 'Thanks for subscribing!'));
                   input.value = '';
                 }
               }}
             >
               <input
                 type="email"
-                placeholder="Email của bạn"
+                placeholder={t('Email của bạn', 'Your email')}
                 className="flex-1 bg-white/10 border border-white/20 rounded-lg px-4 py-2.5 text-sm text-white placeholder:text-gray-500 focus:border-brand-amber"
                 required
               />
@@ -121,7 +133,7 @@ export default function Footer() {
                 type="submit"
                 className="bg-brand-amber hover:bg-brand-gold text-brand-charcoal px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
               >
-                Gửi
+                {t('Gửi', 'Send')}
               </button>
             </form>
           </div>

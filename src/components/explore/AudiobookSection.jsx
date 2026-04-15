@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Lock, Unlock, Play, Clock } from 'lucide-react';
 import { fetchExploreAudiobooks, verifyExploreAudiobookCode } from '../../services/explore';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function AudiobookSection({ googleId }) {
+  const { t, translateText } = useLanguage();
   const [code, setCode] = useState('');
   const [books, setBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +27,7 @@ export default function AudiobookSection({ googleId }) {
       } catch {
         if (mounted) {
           setBooks([]);
-          setError('Không thể tải dữ liệu audiobook.');
+          setError(t('Không thể tải dữ liệu audiobook.', 'Unable to load audiobook data.'));
         }
       } finally {
         if (mounted) {
@@ -45,7 +47,7 @@ export default function AudiobookSection({ googleId }) {
     e.preventDefault();
 
     if (!googleId) {
-      setError('Vui lòng đăng nhập để kích hoạt audiobook.');
+      setError(t('Vui lòng đăng nhập để kích hoạt audiobook.', 'Please sign in to activate audiobooks.'));
       return;
     }
 
@@ -58,9 +60,18 @@ export default function AudiobookSection({ googleId }) {
       const data = await fetchExploreAudiobooks(googleId);
       setBooks(data);
       setCode('');
-      setSuccess('Kích hoạt thành công. Bạn có thể nghe ngay sách đã mở khóa.');
+      setSuccess(
+        t(
+          'Kích hoạt thành công. Bạn có thể nghe ngay sách đã mở khóa.',
+          'Activation successful. You can now listen to unlocked books.'
+        )
+      );
     } catch (err) {
-      setError(err?.response?.data?.error || err?.message || 'Mã code không hợp lệ. Vui lòng kiểm tra lại.');
+      setError(
+        err?.response?.data?.error
+        || err?.message
+        || t('Mã code không hợp lệ. Vui lòng kiểm tra lại.', 'Invalid code. Please verify and try again.')
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -71,11 +82,13 @@ export default function AudiobookSection({ googleId }) {
       {/* Header with illustration */}
       <div className="bg-gradient-to-b from-brand-navy to-brand-deep-blue rounded-2xl p-8 mb-8 text-center">
         <h2 className="font-golan text-3xl font-bold text-white mb-3 italic">
-          Sách Nói
+          {t('Sách Nói', 'Audiobooks')}
         </h2>
         <p className="font-san text-base text-white/75 max-w-xl mx-auto leading-relaxed">
-          Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng
-          nghe những cảm xúc của bản thân
+          {t(
+            'Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng nghe những cảm xúc của bản thân',
+            'With audiobooks, Lumier is not just about hearing words from authors, but listening to your own emotions.'
+          )}
         </p>
       </div>
 
@@ -85,11 +98,14 @@ export default function AudiobookSection({ googleId }) {
           <div className="flex items-center gap-2 mb-4">
             <Lock size={18} className="text-brand-amber" />
             <h3 className="font-san text-base font-semibold text-brand-charcoal">
-              Đăng nhập để nhập code và mở khóa audiobook.
+              {t('Đăng nhập để nhập code và mở khóa audiobook.', 'Sign in to enter code and unlock audiobooks.')}
             </h3>
           </div>
           <p className="font-san text-sm text-brand-muted">
-            Code audiobook được phát hành theo từng giao dịch và chỉ dùng được với tài khoản đã mua.
+            {t(
+              'Code audiobook được phát hành theo từng giao dịch và chỉ dùng được với tài khoản đã mua.',
+              'Audiobook codes are issued per purchase and can only be used with the purchasing account.'
+            )}
           </p>
         </div>
       ) : (
@@ -97,7 +113,10 @@ export default function AudiobookSection({ googleId }) {
           <div className="flex items-center gap-2 mb-4">
             <Lock size={18} className="text-brand-amber" />
             <h3 className="font-san text-base font-semibold text-brand-charcoal">
-              Nhập code từ bookcharm để truy cập vào kho thư viện sách nói đặc quyền
+              {t(
+                'Nhập code từ bookcharm để truy cập vào kho thư viện sách nói đặc quyền',
+                'Enter your bookcharm code to access the exclusive audiobook library'
+              )}
             </h3>
           </div>
 
@@ -110,7 +129,7 @@ export default function AudiobookSection({ googleId }) {
                 setError('');
                 setSuccess('');
               }}
-              placeholder="Nhập code độc quyền..."
+              placeholder={t('Nhập code độc quyền...', 'Enter exclusive code...')}
               className="flex-1 px-4 py-3 border-2 border-brand-cream-dark rounded-xl font-monoht text-sm uppercase tracking-wider"
             />
             <button
@@ -118,7 +137,7 @@ export default function AudiobookSection({ googleId }) {
               disabled={isSubmitting || !code.trim()}
               className="px-6 py-3 bg-brand-navy text-white font-san text-sm font-medium rounded-xl hover:bg-brand-deep-blue transition-colors"
             >
-              {isSubmitting ? 'Đang xác nhận...' : 'Xác nhận'}
+              {isSubmitting ? t('Đang xác nhận...', 'Verifying...') : t('Xác nhận', 'Confirm')}
             </button>
           </form>
 
@@ -131,7 +150,10 @@ export default function AudiobookSection({ googleId }) {
           )}
 
           <p className="font-san text-sm text-brand-muted mt-3 leading-relaxed">
-            Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng nghe những cảm xúc của bản thân
+            {t(
+              'Với sách nói, Lumier không giúp bạn lắng nghe những con chữ từ tác giả, mà là lắng nghe những cảm xúc của bản thân',
+              'With audiobooks, Lumier is not just about hearing words from authors, but listening to your own emotions.'
+            )}
           </p>
         </div>
       )}
@@ -140,7 +162,10 @@ export default function AudiobookSection({ googleId }) {
         <div className="flex items-center gap-2 bg-green-50 text-green-700 rounded-xl px-4 py-3 mb-8">
           <Unlock size={16} />
           <p className="font-san text-sm font-medium">
-            Bạn đã mở khóa {unlockedCount}/{books.length} audiobook.
+            {t('Bạn đã mở khóa {count}/{total} audiobook.', 'You have unlocked {count}/{total} audiobooks.', {
+              count: unlockedCount,
+              total: books.length,
+            })}
           </p>
         </div>
       )}
@@ -178,10 +203,10 @@ export default function AudiobookSection({ googleId }) {
               {/* Info */}
               <div className="flex-1">
                 <h4 className="font-golan text-base font-semibold text-brand-charcoal">
-                  {book.title}
+                  {translateText(book.title)}
                 </h4>
                 <p className="font-san text-sm text-brand-muted mt-0.5">
-                  {book.author}
+                  {translateText(book.author)}
                 </p>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex items-center gap-1 text-brand-muted">
@@ -189,18 +214,18 @@ export default function AudiobookSection({ googleId }) {
                     <span className="font-san text-sm">{book.duration || '--'}</span>
                   </div>
                   <span className="font-san text-sm text-brand-muted">
-                    Đọc: {book.narrator}
+                    {t('Đọc:', 'Narrated by:')} {translateText(book.narrator)}
                   </span>
                 </div>
                 <p className="font-san text-sm text-brand-muted mt-2 line-clamp-2">
-                  {book.summary}
+                  {translateText(book.summary)}
                 </p>
 
                 {book.unlocked && book.audioFileUrl && (
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center gap-1.5 text-brand-navy font-san text-sm font-medium">
                       <Play size={14} />
-                      Nghe ngay
+                      {t('Nghe ngay', 'Play now')}
                     </div>
                     <audio controls className="w-full">
                       <source src={book.audioFileUrl} type={book.audioFormat ? `audio/${book.audioFormat}` : undefined} />
@@ -215,13 +240,17 @@ export default function AudiobookSection({ googleId }) {
 
       {!isLoading && books.length === 0 && (
         <div className="bg-white rounded-2xl p-8 mt-6 text-center shadow-sm">
-          <p className="font-san text-sm text-brand-muted">Chưa có audiobook nào trong thư viện.</p>
+          <p className="font-san text-sm text-brand-muted">
+            {t('Chưa có audiobook nào trong thư viện.', 'No audiobooks in the library yet.')}
+          </p>
         </div>
       )}
 
       {isLoading && (
         <div className="bg-white rounded-2xl p-8 mt-6 text-center shadow-sm">
-          <p className="font-san text-sm text-brand-muted">Đang tải danh sách audiobook...</p>
+          <p className="font-san text-sm text-brand-muted">
+            {t('Đang tải danh sách audiobook...', 'Loading audiobook library...')}
+          </p>
         </div>
       )}
     </div>

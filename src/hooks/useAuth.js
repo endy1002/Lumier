@@ -106,6 +106,7 @@ export function useAuth() {
         phone: data.user.phone || '',
         shippingAddress: data.user.shippingAddress || '',
         marketingOptIn: Boolean(data.user.marketingOptIn),
+        role: data.user.role || 'CUSTOMER',
       };
 
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(authenticatedUser));

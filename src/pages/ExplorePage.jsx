@@ -4,10 +4,12 @@ import AuthorInfo from '../components/explore/AuthorInfo';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { useAuth } from '../hooks/useAuth';
 import { fetchExploreAuthors, fetchExploreSummaries } from '../services/explore';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function ExplorePage() {
   const [refSummary, summaryVisible] = useScrollReveal();
   const { user } = useAuth();
+  const { t, translateText } = useLanguage();
   const [authors, setAuthors] = useState([]);
   const [summaries, setSummaries] = useState([]);
 
@@ -53,7 +55,7 @@ export default function ExplorePage() {
         <div className="absolute inset-0 bg-gradient-to-r from-[#0f1a31]/78 via-[#0f1a31]/64 to-[#0f1a31]/42" />
         <div className="absolute inset-0 z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
           <h1 className="font-golan text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight max-w-3xl italic drop-shadow-[0_3px_16px_rgba(0,0,0,0.4)]">
-            Nơi tâm hồn vui hơn qua những con chữ
+            {t('Nơi tâm hồn vui hơn qua những con chữ', 'Where words make the soul lighter')}
           </h1>
         </div>
       </section>
@@ -70,13 +72,16 @@ export default function ExplorePage() {
         >
           <div className="bg-gradient-to-r from-brand-cream to-white rounded-2xl p-8">
             <h2 className="font-golan text-2xl md:text-3xl font-bold text-brand-charcoal mb-2 italic">
-              Tóm tắt nội dung sách
+              {t('Tóm tắt nội dung sách', 'Book Summary')}
             </h2>
             <p className="font-san text-base text-brand-muted mb-1 leading-relaxed">
-              Cho phép người dùng xem trước về nội dung sách trong trường hợp mua tặng hoặc mua vì bìa, mua theo gu.
+              {t(
+                'Cho phép người dùng xem trước về nội dung sách trong trường hợp mua tặng hoặc mua vì bìa, mua theo gu.',
+                'Let users preview book content when buying as a gift, buying for cover design, or buying by personal taste.'
+              )}
             </p>
             <p className="font-san text-base text-brand-navy/85 mb-8">
-              Xem tóm tắt nội dung sách
+              {t('Xem tóm tắt nội dung sách', 'Browse book summaries')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -86,19 +91,19 @@ export default function ExplorePage() {
                   className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
                 >
                   <span className="inline-block font-san text-[10px] font-semibold uppercase tracking-wider bg-brand-amber/10 text-brand-amber px-2.5 py-1 rounded-full mb-3">
-                    {book.tag}
+                    {translateText(book.tag)}
                   </span>
                   <h3 className="font-golan text-base font-bold text-brand-charcoal mb-1">
-                    {book.title}
+                    {translateText(book.title)}
                   </h3>
                   <p className="font-san text-sm text-brand-blue mb-3">
-                    {book.author}
+                    {translateText(book.author)}
                   </p>
                   <p className="font-san text-sm text-brand-muted leading-relaxed">
-                    {book.excerpt}
+                    {translateText(book.excerpt)}
                   </p>
                   <button className="mt-4 font-san text-sm text-brand-navy font-medium hover:text-brand-amber transition-colors">
-                    Đọc thêm →
+                    {t('Đọc thêm →', 'Read more ->')}
                   </button>
                 </div>
               ))}
@@ -106,7 +111,9 @@ export default function ExplorePage() {
 
             {summaries.length === 0 && (
               <div className="bg-white rounded-xl p-6 mt-4 text-center">
-                <p className="font-san text-sm text-brand-muted">Chưa có dữ liệu tóm tắt sách.</p>
+                <p className="font-san text-sm text-brand-muted">
+                  {t('Chưa có dữ liệu tóm tắt sách.', 'No book summaries available yet.')}
+                </p>
               </div>
             )}
           </div>

@@ -5,11 +5,9 @@ import TopNavigation from './TopNavigation';
 import Footer from './Footer';
 import CartDrawer from '../cart/CartDrawer';
 import ChatbotWidget from '../chatbot/ChatbotWidget';
-import Toast from '../common/Toast';
 
 export default function Layout() {
   const [cartOpen, setCartOpen] = useState(false);
-  const [toast, setToast] = useState(null);
   const location = useLocation();
 
   const isCustomizePage = location.pathname.includes('/customize');
@@ -18,10 +16,7 @@ export default function Layout() {
     location.pathname.includes('/customize') ||
     location.pathname.includes('/thanh-toan');
 
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
+  const showToast = () => {};
 
   return (
     <div className={`flex flex-col ${isCustomizePage ? 'h-screen overflow-hidden' : 'min-h-screen'}`}>
@@ -42,15 +37,6 @@ export default function Layout() {
 
       {/* Chatbot Widget */}
       {!isPurchasePage && <ChatbotWidget />}
-
-      {/* Toast Notification */}
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
-        />
-      )}
     </div>
   );
 }

@@ -11,6 +11,7 @@ import com.lumier.backend.repository.AudiobookRepository;
 import com.lumier.backend.repository.BookAuthorRepository;
 import com.lumier.backend.repository.BookSummaryRepository;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -60,9 +61,24 @@ public class ExploreService {
         author.getName(),
         author.getBio(),
         author.getAvatarUrl(),
-        splitWorks(author.getFeaturedWorks())
+        splitWorks(author.getFeaturedWorks()),
+        buildInfoImages(author)
       ))
       .toList();
+  }
+
+  private List<String> buildInfoImages(com.lumier.backend.domain.BookAuthor author) {
+    List<String> values = new ArrayList<>();
+    if (author.getInfoImage1() != null && !author.getInfoImage1().isBlank()) {
+      values.add(author.getInfoImage1());
+    }
+    if (author.getInfoImage2() != null && !author.getInfoImage2().isBlank()) {
+      values.add(author.getInfoImage2());
+    }
+    if (author.getInfoImage3() != null && !author.getInfoImage3().isBlank()) {
+      values.add(author.getInfoImage3());
+    }
+    return values;
   }
 
   @Transactional(readOnly = true)
@@ -71,7 +87,7 @@ public class ExploreService {
       ? Set.of()
       : audiobookAccessCodeRepository.findUnlockedAudiobookIdsByGoogleId(googleId);
 
-    return audiobookRepository.findByIsActiveTrueOrderByDisplayOrderAsc()
+    return audiobookRepository.findActiveCharmAudiobooksOrderByDisplayOrderAsc()
       .stream()
       .map(book -> toResponse(book, unlockedIds.contains(book.getId())))
       .toList();

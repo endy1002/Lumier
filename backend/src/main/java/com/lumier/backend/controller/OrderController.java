@@ -35,4 +35,12 @@ public class OrderController {
   public List<OrderHistoryResponse> history(@RequestParam @NotBlank String googleId) {
     return orderService.getOrderHistory(googleId);
   }
+
+  @GetMapping("/{orderId}/audiobook-codes")
+  public List<String> audiobookCodes(
+    @RequestParam @NotBlank String googleId,
+    @org.springframework.web.bind.annotation.PathVariable Long orderId
+  ) {
+    return orderService.getOrderAudiobookCodes(googleId, orderId);
+  }
 }

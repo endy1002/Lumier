@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useScrollReveal } from '../../hooks/useScrollReveal';
+import { useLanguage } from '../../context/LanguageContext';
 
 export default function BentoGrid() {
   const [ref, isVisible] = useScrollReveal();
   const [currentSlide, setCurrentSlide] = useState(0);
+  const { t } = useLanguage();
 
   const slides = [
     '/images/feedback/IMG_6274.PNG',
@@ -30,7 +32,7 @@ export default function BentoGrid() {
         {/* Section title */}
         <div className="mb-10 inline-block border-brand-navy pb-1">
           <h2 className="font-golan text-2xl md:text-3xl font-medium text-brand-navy tracking-wide">
-            Những niềm tự hào của Lumier
+            {t('Những niềm tự hào của Lumier', 'Lumier highlights')}
           </h2>
         </div>
 
@@ -43,7 +45,7 @@ export default function BentoGrid() {
             {/* Sự hài lòng của khách hàng (tall box) */}
             <div className="flex-[8] bg-brand-cream border-2 border-brand-charcoal rounded-3xl p-6 md:min-h-[350px] relative overflow-hidden flex flex-col justify-between shadow-sm">
               <h3 className="font-golan text-xl font-bold text-brand-charcoal z-10 relative">
-                Sự hài lòng của khách hàng
+                {t('Sự hài lòng của khách hàng', 'Customer satisfaction')}
               </h3>
 
               {/* Slideshow placeholder */}
@@ -59,7 +61,7 @@ export default function BentoGrid() {
               <div className="absolute inset-0 bg-brand-charcoal/40 transition-colors group-hover:bg-brand-charcoal/50 z-10" />
               <img src="/images/products/process.png" className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" alt="Process" />
               <h3 className="font-golan text-xl font-bold text-white text-center px-4 relative z-20">
-                Quá trình tạo ra sản phẩm
+                {t('Quá trình tạo ra sản phẩm', 'How our products are made')}
               </h3>
             </div>
           </div>
@@ -76,7 +78,7 @@ export default function BentoGrid() {
                   1000<span className="font-san font-normal text-4xl text-brand-charcoal/60 absolute mt-2 ml-1">+</span>
                 </p>
                 <p className="font-golan text-xl font-bold text-brand-charcoal mt-3">
-                  bìa sách có sẵn
+                  {t('bìa sách có sẵn', 'ready-made covers')}
                 </p>
               </div>
 
@@ -86,7 +88,7 @@ export default function BentoGrid() {
                   10<span className="font-san font-normal text-4xl text-white/70 absolute top-2 -right-6">+</span>
                 </p>
                 <p className="font-golan text-xl font-bold text-white mt-3">
-                  NXB cùng hợp tác
+                  {t('NXB cùng hợp tác', 'partner publishers')}
                 </p>
               </div>
             </div>
@@ -110,7 +112,10 @@ export default function BentoGrid() {
                     OUR MISSION
                   </p>
                   <p className="font-san text-xl md:text-2xl text-white font-medium leading-relaxed max-w-4xl drop-shadow-sm">
-                    Lumier trao gửi khách hàng những món phụ kiện cá tính, cá nhân và có tính biểu tượng nhằm nâng cao đời sống tinh thần và vun vén một cộng đồng đọc sách của người Việt Nam.
+                    {t(
+                      'Lumier trao gửi khách hàng những món phụ kiện cá tính, cá nhân và có tính biểu tượng nhằm nâng cao đời sống tinh thần và vun vén một cộng đồng đọc sách của người Việt Nam.',
+                      'Lumier delivers expressive, personal, and symbolic accessories that enrich everyday life and nurture a stronger reading community in Vietnam.'
+                    )}
                   </p>
                 </div>
               </div>

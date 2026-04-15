@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../hooks/useAuth';
 import { useUTM } from '../hooks/useUTM';
 import { PAYMENT_METHODS, SPINE_COLORS } from '../config/constants';
+import { useLanguage } from '../context/LanguageContext';
 import api from '../services/api';
 
 export default function CheckoutPage() {
@@ -12,6 +13,7 @@ export default function CheckoutPage() {
   const { items, subtotal, discount, total, promo, applyPromo, removePromo, promoError, clearCart } = useCart();
   const { user, saveOrder, updateUserProfile } = useAuth();
   const { getUTMData } = useUTM();
+  const { t, formatCurrency } = useLanguage();
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -121,12 +123,12 @@ export default function CheckoutPage() {
 
   const validate = () => {
     const newErrors = {};
-    if (!(user?.googleId || user?.id)) newErrors.auth = 'Vui lòng đăng nhập trước khi thanh toán';
-    if (!formData.phone.trim()) newErrors.phone = 'Vui lòng nhập số điện thoại';
+    if (!(user?.googleId || user?.id)) newErrors.auth = t('Vui lòng đăng nhập trước khi thanh toán', 'Please sign in before checkout');
+    if (!formData.phone.trim()) newErrors.phone = t('Vui lòng nhập số điện thoại', 'Please enter your phone number');
     else if (!/^[0-9]{9,11}$/.test(formData.phone.replace(/\s/g, '')))
-      newErrors.phone = 'Số điện thoại không hợp lệ';
-    if (!formData.name.trim()) newErrors.name = 'Vui lòng nhập họ tên';
-    if (!formData.address.trim()) newErrors.address = 'Vui lòng nhập địa chỉ giao hàng';
+      newErrors.phone = t('Số điện thoại không hợp lệ', 'Invalid phone number');
+    if (!formData.name.trim()) newErrors.name = t('Vui lòng nhập họ tên', 'Please enter your full name');
+    if (!formData.address.trim()) newErrors.address = t('Vui lòng nhập địa chỉ giao hàng', 'Please enter your shipping address');
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -197,7 +199,7 @@ export default function CheckoutPage() {
       setOrderPlaced(true);
       clearCart();
     } catch (error) {
-      const message = error?.response?.data?.error || error?.response?.data?.message || error?.message || 'Khong the luu don hang. Vui long thu lai.';
+      const message = error?.response?.data?.error || error?.response?.data?.message || error?.message || t('Khong the luu don hang. Vui long thu lai.', 'Unable to place order. Please try again.');
       setSubmitError(message);
     } finally {
       setIsSubmitting(false);
@@ -213,13 +215,17 @@ export default function CheckoutPage() {
             <CheckCircle size={40} className="text-green-600" />
           </div>
           <h1 className="font-golan text-3xl font-bold text-brand-charcoal mb-3">
-            Đặt hàng thành công!
+            {t('Đặt hàng thành công!', 'Order placed successfully!')}
           </h1>
           <p className="font-san text-sm text-brand-muted mb-2">
-            Mã đơn hàng: <span className="font-monoht text-brand-navy font-bold">{placedOrder.id}</span>
+            {t('Mã đơn hàng:', 'Order code:')} <span className="font-monoht text-brand-navy font-bold">{placedOrder.id}</span>
           </p>
           <p className="font-san text-sm text-brand-muted mb-8">
-            Chúng tôi sẽ liên hệ bạn qua <strong>{formData.email}</strong> để xác nhận đơn hàng.
+            {t(
+              'Chúng tôi sẽ liên hệ bạn qua {email} để xác nhận đơn hàng.',
+              'We will contact you at {email} to confirm your order.',
+              { email: formData.email }
+            )}
           </p>
 
           <div className="flex gap-3 justify-center">
@@ -227,13 +233,13 @@ export default function CheckoutPage() {
               to="/"
               className="px-6 py-3 bg-brand-navy text-white font-san text-sm font-medium rounded-xl hover:bg-brand-deep-blue transition-colors"
             >
-              Về trang chủ
+              {t('Về trang chủ', 'Back to home')}
             </Link>
             <Link
               to="/tai-khoan"
               className="px-6 py-3 border-2 border-brand-cream-dark text-brand-charcoal font-san text-sm font-medium rounded-xl hover:border-brand-amber transition-colors"
             >
-              Xem đơn hàng
+              {t('Xem đơn hàng', 'View orders')}
             </Link>
           </div>
         </div>
@@ -247,16 +253,16 @@ export default function CheckoutPage() {
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
         <div className="text-5xl mb-6">🛒</div>
         <h1 className="font-golan text-2xl font-bold text-brand-charcoal mb-3">
-          Giỏ hàng trống
+          {t('Giỏ hàng trống', 'Your cart is empty')}
         </h1>
         <p className="font-san text-sm text-brand-muted mb-6">
-          Hãy khám phá sản phẩm của Lumier trước nhé!
+          {t('Hãy khám phá sản phẩm của Lumier trước nhé!', 'Explore Lumier products first.')}
         </p>
         <Link
           to="/san-pham"
           className="inline-flex items-center gap-2 px-6 py-3 bg-brand-navy text-white font-san text-sm font-medium rounded-xl"
         >
-          Xem sản phẩm
+          {t('Xem sản phẩm', 'Browse products')}
         </Link>
       </div>
     );
@@ -267,16 +273,19 @@ export default function CheckoutPage() {
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
         <div className="bg-white rounded-2xl p-10 shadow-sm">
           <h1 className="font-golan text-2xl font-bold text-brand-charcoal mb-3">
-            Vui lòng đăng nhập
+            {t('Vui lòng đăng nhập', 'Please sign in')}
           </h1>
           <p className="font-san text-sm text-brand-muted mb-6">
-            Bạn cần đăng nhập bằng Google trước khi thực hiện thanh toán.
+            {t(
+              'Bạn cần đăng nhập bằng Google trước khi thực hiện thanh toán.',
+              'You need to sign in with Google before checkout.'
+            )}
           </p>
           <Link
             to="/tai-khoan"
             className="inline-flex items-center gap-2 px-6 py-3 bg-brand-navy text-white font-san text-sm font-medium rounded-xl"
           >
-            Đăng nhập ngay
+            {t('Đăng nhập ngay', 'Sign in now')}
           </Link>
         </div>
       </div>
@@ -292,7 +301,7 @@ export default function CheckoutPage() {
         className="flex items-center gap-2 font-san text-sm text-brand-muted hover:text-brand-charcoal mb-8 transition-colors"
       >
         <ArrowLeft size={16} />
-        Quay lại
+        {t('Quay lại', 'Back')}
       </button>
 
       {/* Logo */}
@@ -301,7 +310,7 @@ export default function CheckoutPage() {
           <h1 className="font-golan text-3xl font-bold text-brand-navy">LUMIER</h1>
         </Link>
         <p className="font-san text-xs text-brand-muted mt-1 uppercase tracking-widest">
-          Thanh toán
+          {t('Thanh toán', 'Checkout')}
         </p>
       </div>
 
@@ -312,13 +321,13 @@ export default function CheckoutPage() {
             {/* Contact info */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="font-golan text-lg font-bold text-brand-charcoal mb-4">
-                Thông tin liên hệ
+                {t('Thông tin liên hệ', 'Contact information')}
               </h2>
 
               <div className="space-y-4">
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Email đăng nhập
+                    {t('Email đăng nhập', 'Signed-in email')}
                   </label>
                   <input
                     type="email"
@@ -331,7 +340,7 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Số điện thoại <span className="text-red-500">*</span>
+                    {t('Số điện thoại', 'Phone number')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="tel"
@@ -350,14 +359,14 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Họ và tên <span className="text-red-500">*</span>
+                    {t('Họ và tên', 'Full name')} <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="Nguyễn Văn A"
+                    placeholder={t('Nguyễn Văn A', 'John Doe')}
                     className={`w-full px-4 py-3 border-2 rounded-xl font-san text-sm ${
                       errors.name ? 'border-red-400' : 'border-brand-cream-dark'
                     }`}
@@ -369,13 +378,13 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Địa chỉ giao hàng <span className="text-red-500">*</span>
+                    {t('Địa chỉ giao hàng', 'Shipping address')} <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="address"
                     value={formData.address}
                     onChange={handleChange}
-                    placeholder="Số nhà, đường, quận, thành phố..."
+                    placeholder={t('Số nhà, đường, quận, thành phố...', 'Street, district, city...')}
                     rows={2}
                     className={`w-full px-4 py-3 border-2 rounded-xl font-san text-sm resize-none ${
                       errors.address ? 'border-red-400' : 'border-brand-cream-dark'
@@ -388,13 +397,13 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block font-san text-xs font-semibold text-brand-charcoal mb-1.5 uppercase tracking-wider">
-                    Ghi chú
+                    {t('Ghi chú', 'Notes')}
                   </label>
                   <textarea
                     name="note"
                     value={formData.note}
                     onChange={handleChange}
-                    placeholder="Ghi chú đơn hàng (không bắt buộc)..."
+                    placeholder={t('Ghi chú đơn hàng (không bắt buộc)...', 'Order notes (optional)...')}
                     rows={2}
                     className="w-full px-4 py-3 border-2 border-brand-cream-dark rounded-xl font-san text-sm resize-none"
                   />
@@ -405,7 +414,7 @@ export default function CheckoutPage() {
             {/* Payment method */}
             <div className="bg-white rounded-2xl p-6 shadow-sm">
               <h2 className="font-golan text-lg font-bold text-brand-charcoal mb-4">
-                Phương thức thanh toán
+                {t('Phương thức thanh toán', 'Payment method')}
               </h2>
               <div className="space-y-3">
                 {PAYMENT_METHODS.map((method) => (
@@ -443,7 +452,7 @@ export default function CheckoutPage() {
           <div>
             <div className="bg-white rounded-2xl p-6 shadow-sm sticky top-24">
               <h2 className="font-golan text-lg font-bold text-brand-charcoal mb-4">
-                Đơn hàng của bạn
+                {t('Đơn hàng của bạn', 'Your order')}
               </h2>
 
               {/* Items */}
@@ -471,7 +480,7 @@ export default function CheckoutPage() {
                       </p>
                     </div>
                     <p className="font-san text-sm font-semibold text-brand-charcoal">
-                      {(item.unitPrice * item.quantity).toLocaleString('vi-VN')}đ
+                      {formatCurrency(item.unitPrice * item.quantity)}
                     </p>
                   </div>
                 ))}
@@ -484,7 +493,7 @@ export default function CheckoutPage() {
                     type="text"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
-                    placeholder="Mã khuyến mãi"
+                    placeholder={t('Mã khuyến mãi', 'Promo code')}
                     className="flex-1 px-3 py-2.5 border-2 border-brand-cream-dark rounded-xl font-san text-sm"
                   />
                   <button
@@ -492,7 +501,7 @@ export default function CheckoutPage() {
                     onClick={() => applyPromo(promoCode)}
                     className="px-4 py-2.5 bg-brand-cream-dark text-brand-charcoal font-san text-sm font-medium rounded-xl hover:bg-brand-amber hover:text-white transition-colors"
                   >
-                    Áp dụng
+                    {t('Áp dụng', 'Apply')}
                   </button>
                 </div>
                 {promoError && (
@@ -501,17 +510,17 @@ export default function CheckoutPage() {
                 {promo && (
                   <div className="flex items-center justify-between mt-2 bg-green-50 px-3 py-2 rounded-lg">
                     <p className="font-san text-xs text-green-700 font-medium">
-                      ✅ Mã {promo.code} — Giảm{' '}
+                      ✅ {t('Mã', 'Code')} {promo.code} — {t('Giảm', 'Off')}{' '}
                       {promo.type === 'percent'
                         ? `${promo.value}%`
-                        : `${promo.value.toLocaleString('vi-VN')}đ`}
+                        : formatCurrency(promo.value)}
                     </p>
                     <button
                       type="button"
                       onClick={removePromo}
                       className="text-red-400 hover:text-red-600 text-xs"
                     >
-                      Xóa
+                      {t('Xóa', 'Remove')}
                     </button>
                   </div>
                 )}
@@ -520,25 +529,25 @@ export default function CheckoutPage() {
               {/* Totals */}
               <div className="space-y-2 border-t border-brand-cream-dark pt-4 mb-6">
                 <div className="flex justify-between font-san text-sm">
-                  <span className="text-brand-muted">Tạm tính</span>
-                  <span>{subtotal.toLocaleString('vi-VN')}đ</span>
+                  <span className="text-brand-muted">{t('Tạm tính', 'Subtotal')}</span>
+                  <span>{formatCurrency(subtotal)}</span>
                 </div>
                 {discount > 0 && (
                   <div className="flex justify-between font-san text-sm text-green-600">
-                    <span>Giảm giá</span>
-                    <span>-{discount.toLocaleString('vi-VN')}đ</span>
+                    <span>{t('Giảm giá', 'Discount')}</span>
+                    <span>-{formatCurrency(discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-san text-sm">
-                  <span className="text-brand-muted">Vận chuyển</span>
-                  <span className="text-green-600">Miễn phí</span>
+                  <span className="text-brand-muted">{t('Vận chuyển', 'Shipping')}</span>
+                  <span className="text-green-600">{t('Miễn phí', 'Free')}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-brand-cream-dark">
                   <span className="font-san font-semibold text-brand-charcoal">
-                    Tổng cộng
+                    {t('Tổng cộng', 'Total')}
                   </span>
                   <span className="font-golan text-2xl font-bold text-brand-amber">
-                    {total.toLocaleString('vi-VN')}đ
+                    {formatCurrency(total)}
                   </span>
                 </div>
               </div>
@@ -550,7 +559,7 @@ export default function CheckoutPage() {
                 className="w-full py-4 bg-brand-navy text-white font-san font-semibold rounded-xl hover:bg-brand-deep-blue transition-colors flex items-center justify-center gap-2"
               >
                 <CreditCard size={18} />
-                {isSubmitting ? 'Dang xu ly...' : 'Đặt hàng'}
+                {isSubmitting ? t('Dang xu ly...', 'Processing...') : t('Đặt hàng', 'Place order')}
               </button>
 
               {submitError && (
@@ -558,7 +567,10 @@ export default function CheckoutPage() {
               )}
 
               <p className="font-san text-[10px] text-brand-muted text-center mt-3">
-                * Đây là thanh toán mô phỏng, không kết nối cổng thanh toán thật
+                {t(
+                  '* Đây là thanh toán mô phỏng, không kết nối cổng thanh toán thật',
+                  '* This is a simulated checkout and not connected to a real payment gateway.'
+                )}
               </p>
             </div>
           </div>

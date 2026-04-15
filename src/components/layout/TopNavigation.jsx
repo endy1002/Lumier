@@ -4,7 +4,9 @@ import { Search, ShoppingBag, User, Menu, X } from 'lucide-react';
 import { NAV_LINKS } from '../../config/constants';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useLanguage } from '../../context/LanguageContext';
 import SearchBar from '../search/SearchBar';
+import LanguageSwitcher from './LanguageSwitcher';
 
 export default function TopNavigation({ onCartClick }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -13,6 +15,14 @@ export default function TopNavigation({ onCartClick }) {
   const navigate = useNavigate();
   const { itemCount } = useCart();
   const { user, isAuthenticated } = useAuth();
+  const { t } = useLanguage();
+
+  const navLabels = {
+    '/': t('Trang chủ', 'Home'),
+    '/san-pham': t('Sản phẩm', 'Products'),
+    '/kham-pha': t('Khám phá', 'Explore'),
+    '/bai-viet': t('Bài viết', 'Articles'),
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-brand-cream/95 backdrop-blur-md border-b border-brand-cream-dark/50">
@@ -40,7 +50,7 @@ export default function TopNavigation({ onCartClick }) {
                     : 'text-brand-charcoal'
                     }`}
                 >
-                  {link.label}
+                  {navLabels[link.path] || link.label}
                   <span
                     className={`absolute -bottom-1 left-0 h-0.5 bg-brand-amber transition-all duration-300 ${location.pathname === link.path
                       ? 'w-full'
@@ -83,7 +93,7 @@ export default function TopNavigation({ onCartClick }) {
               <button
                 onClick={() => setSearchOpen(!searchOpen)}
                 className="p-1.5 text-brand-charcoal hover:text-brand-amber transition-colors"
-                aria-label="Tìm kiếm"
+                aria-label={t('Tìm kiếm', 'Search')}
               >
                 <Search size={20} strokeWidth={1.5} />
               </button>
@@ -92,7 +102,7 @@ export default function TopNavigation({ onCartClick }) {
               <button
                 onClick={onCartClick}
                 className="p-1.5 text-brand-charcoal hover:text-brand-amber transition-colors relative"
-                aria-label="Giỏ hàng"
+                aria-label={t('Giỏ hàng', 'Cart')}
               >
                 <ShoppingBag size={20} strokeWidth={1.5} />
                 {itemCount > 0 && (
@@ -106,13 +116,15 @@ export default function TopNavigation({ onCartClick }) {
               <Link
                 to="/tai-khoan"
                 className="flex items-center gap-2 p-1.5 text-brand-charcoal hover:text-brand-amber transition-colors"
-                aria-label="Tài khoản"
+                aria-label={t('Tài khoản', 'Account')}
               >
                 <User size={20} strokeWidth={1.5} />
                 <span className="hidden sm:block font-san text-[13px] font-medium uppercase tracking-wide">
                   {isAuthenticated ? (user?.name || user?.email || 'User') : 'User'}
                 </span>
               </Link>
+
+              <LanguageSwitcher />
             </div>
           </div>
         </div>
@@ -141,9 +153,13 @@ export default function TopNavigation({ onCartClick }) {
                   : 'text-brand-charcoal hover:text-brand-amber'
                   }`}
               >
-                {link.label}
+                {navLabels[link.path] || link.label}
               </Link>
             ))}
+
+            <div className="mt-3 px-2">
+              <LanguageSwitcher />
+            </div>
           </div>
         )}
       </nav>
