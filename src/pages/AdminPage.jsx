@@ -57,7 +57,6 @@ const EMPTY_AUDIOBOOK = {
   authorName: '',
   narrator: '',
   durationMinutes: '',
-  coverImageUrl: '',
   summary: '',
   audioFileUrl: '',
   audioFormat: '',
@@ -104,7 +103,6 @@ function toAudiobookForm(item) {
     authorName: item?.authorName || '',
     narrator: item?.narrator || '',
     durationMinutes: item?.durationMinutes ? String(item.durationMinutes) : '',
-    coverImageUrl: item?.coverImageUrl || '',
     summary: item?.summary || '',
     audioFileUrl: item?.audioFileUrl || '',
     audioFormat: item?.audioFormat || '',
@@ -512,7 +510,6 @@ export default function AdminPage() {
       authorName: audiobookForm.authorName,
       narrator: audiobookForm.narrator,
       durationMinutes: audiobookForm.durationMinutes ? Number(audiobookForm.durationMinutes) : null,
-      coverImageUrl: audiobookForm.coverImageUrl,
       summary: audiobookForm.summary,
       audioFileUrl: audiobookForm.audioFileUrl,
       audioFormat: audiobookForm.audioFormat,
@@ -825,14 +822,6 @@ export default function AdminPage() {
               <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer font-san text-sm">
                 <Upload size={16} /> Upload audio
                 <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleUploadAudio(e.target.files?.[0], null, 'Audio audiobook')} />
-              </label>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-3 items-end">
-              <input value={audiobookForm.coverImageUrl} onChange={(e) => setAudiobookForm((v) => ({ ...v, coverImageUrl: e.target.value }))} placeholder="URL cover" className="border rounded-lg px-3 py-2 font-san text-sm" />
-              <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer font-san text-sm">
-                <Upload size={16} /> Upload cover
-                <input type="file" accept="image/*" className="hidden" onChange={(e) => handleUploadImage(e.target.files?.[0], (url) => setAudiobookForm((v) => ({ ...v, coverImageUrl: url })), 'Ảnh cover audiobook')} />
               </label>
             </div>
 

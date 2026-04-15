@@ -10,6 +10,7 @@ import com.lumier.backend.repository.AudiobookAccessCodeRepository;
 import com.lumier.backend.repository.AudiobookRepository;
 import com.lumier.backend.repository.BookAuthorRepository;
 import com.lumier.backend.repository.BookSummaryRepository;
+import com.lumier.backend.repository.ProductRepository;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,17 +26,20 @@ public class ExploreService {
   private final BookAuthorRepository bookAuthorRepository;
   private final AudiobookRepository audiobookRepository;
   private final AudiobookAccessCodeRepository audiobookAccessCodeRepository;
+  private final ProductRepository productRepository;
 
   public ExploreService(
     BookSummaryRepository bookSummaryRepository,
     BookAuthorRepository bookAuthorRepository,
     AudiobookRepository audiobookRepository,
-    AudiobookAccessCodeRepository audiobookAccessCodeRepository
+    AudiobookAccessCodeRepository audiobookAccessCodeRepository,
+    ProductRepository productRepository
   ) {
     this.bookSummaryRepository = bookSummaryRepository;
     this.bookAuthorRepository = bookAuthorRepository;
     this.audiobookRepository = audiobookRepository;
     this.audiobookAccessCodeRepository = audiobookAccessCodeRepository;
+    this.productRepository = productRepository;
   }
 
   @Transactional(readOnly = true)
@@ -119,6 +123,13 @@ public class ExploreService {
   }
 
   private AudiobookResponse toResponse(Audiobook book, boolean unlocked) {
+    Long productId = book.getProductId();
+    String coverImage = productId == null
+      ? book.getCoverImageUrl()
+      : productRepository.findById(productId)
+        .map(product -> product.getImageUrl())
+        .orElse(book.getCoverImageUrl());
+
     return new AudiobookResponse(
       book.getId(),
       book.getTitle(),
@@ -126,7 +137,7 @@ public class ExploreService {
       book.getNarrator(),
       book.getDurationMinutes(),
       formatDuration(book.getDurationMinutes()),
-      book.getCoverImageUrl(),
+      coverImage,
       book.getSummary(),
       unlocked ? book.getAudioFileUrl() : null,
       unlocked ? normalizeAudioFormat(book.getAudioFormat()) : null,

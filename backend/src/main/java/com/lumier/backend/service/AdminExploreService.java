@@ -121,6 +121,11 @@ public class AdminExploreService {
 
     Product saved = productRepository.save(Objects.requireNonNull(product));
 
+    if (linkedAudiobook != null) {
+      linkedAudiobook.setCoverImageUrl(trimToNull(saved.getImageUrl()));
+      audiobookRepository.save(linkedAudiobook);
+    }
+
     if (saved.getCategory() == ProductCategory.CHARM && linkedAudiobook == null && hasAudiobookSeed(request)) {
       createRequiredCharmAudiobook(saved, request);
     }
@@ -278,9 +283,6 @@ public class AdminExploreService {
       }
       audiobook.setDurationMinutes(request.durationMinutes());
     }
-    if (request.coverImageUrl() != null) {
-      audiobook.setCoverImageUrl(trimToNull(request.coverImageUrl()));
-    }
     if (request.summary() != null) {
       audiobook.setSummary(trimToNull(request.summary()));
     }
@@ -299,6 +301,7 @@ public class AdminExploreService {
 
     audiobook.setProductId(selectedProduct.getId());
     audiobook.setAuthor(author);
+  audiobook.setCoverImageUrl(trimToNull(selectedProduct.getImageUrl()));
 
     return toItem(audiobookRepository.save(audiobook));
   }
@@ -339,11 +342,7 @@ public class AdminExploreService {
     audiobook.setAudioFileUrl(requireNonBlank(request.audiobookAudioFileUrl(), "Sản phẩm CHARM bắt buộc có URL audio."));
     audiobook.setAudioFormat(requireNonBlank(request.audiobookAudioFormat(), "Sản phẩm CHARM bắt buộc có định dạng audio."));
 
-    String cover = trimToNull(request.audiobookCoverImageUrl());
-    if (cover == null) {
-      cover = trimToNull(product.getImageUrl());
-    }
-    audiobook.setCoverImageUrl(cover);
+    audiobook.setCoverImageUrl(trimToNull(product.getImageUrl()));
 
     audiobook.setDisplayOrder(request.audiobookDisplayOrder() == null
       ? audiobookRepository.findMaxDisplayOrder() + 1
@@ -416,7 +415,7 @@ public class AdminExploreService {
       audiobook.getTitle(),
       audiobook.getNarrator(),
       audiobook.getDurationMinutes(),
-      audiobook.getCoverImageUrl(),
+      product == null ? audiobook.getCoverImageUrl() : product.getImageUrl(),
       audiobook.getSummary(),
       audiobook.getAudioFileUrl(),
       audiobook.getAudioFormat(),

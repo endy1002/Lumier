@@ -7,6 +7,7 @@ export default function AudiobookSection({ googleId }) {
   const { t, translateText } = useLanguage();
   const [code, setCode] = useState('');
   const [books, setBooks] = useState([]);
+  const [activePlayerBookId, setActivePlayerBookId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -223,13 +224,22 @@ export default function AudiobookSection({ googleId }) {
 
                 {book.unlocked && book.audioFileUrl && (
                   <div className="mt-3 space-y-2">
-                    <div className="flex items-center gap-1.5 text-brand-navy font-san text-sm font-medium">
+                    <button
+                      type="button"
+                      onClick={() => setActivePlayerBookId((prev) => (prev === book.id ? null : book.id))}
+                      className="inline-flex items-center gap-1.5 text-brand-navy font-san text-sm font-medium hover:underline"
+                    >
                       <Play size={14} />
-                      {t('Nghe ngay', 'Play now')}
-                    </div>
-                    <audio controls className="w-full">
-                      <source src={book.audioFileUrl} type={book.audioFormat ? `audio/${book.audioFormat}` : undefined} />
-                    </audio>
+                      {activePlayerBookId === book.id
+                        ? t('Ẩn trình phát', 'Hide player')
+                        : t('Nghe ngay', 'Play now')}
+                    </button>
+
+                    {activePlayerBookId === book.id && (
+                      <audio controls autoPlay className="w-full">
+                        <source src={book.audioFileUrl} type={book.audioFormat ? `audio/${book.audioFormat}` : undefined} />
+                      </audio>
+                    )}
                   </div>
                 )}
               </div>
