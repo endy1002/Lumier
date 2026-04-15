@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { LogIn, LogOut, Package, BookOpen } from 'lucide-react';
 import api from '../services/api';
@@ -99,6 +99,7 @@ function resolveHardwareLabel(hardwareType) {
 export default function AccountPage() {
   const { user, isAuthenticated, isLoading, loginWithGoogle, logout } =
     useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState('orders');
   const [loginError, setLoginError] = useState('');
   const [orders, setOrders] = useState([]);
@@ -108,6 +109,13 @@ export default function AccountPage() {
   const [orderCodeLoadingRows, setOrderCodeLoadingRows] = useState({});
   const [hasAcceptedPolicies, setHasAcceptedPolicies] = useState(false);
   const [activePolicyModal, setActivePolicyModal] = useState(null);
+
+  useEffect(() => {
+    const policyParam = String(searchParams.get('policy') || '').toLowerCase();
+    if (policyParam === 'terms' || policyParam === 'privacy') {
+      setActivePolicyModal(policyParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const userGoogleId = user?.googleId || user?.id;
@@ -264,10 +272,28 @@ export default function AccountPage() {
     }
   };
 
+  const openPolicyModal = (policyType) => {
+    setActivePolicyModal(policyType);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set('policy', policyType);
+      return next;
+    }, { replace: true });
+  };
+
+  const closePolicyModal = () => {
+    setActivePolicyModal(null);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete('policy');
+      return next;
+    }, { replace: true });
+  };
+
+  const policy = activePolicyModal ? POLICY_CONTENT[activePolicyModal] : null;
+
   // === Login Screen ===
   if (!isAuthenticated) {
-    const policy = activePolicyModal ? POLICY_CONTENT[activePolicyModal] : null;
-
     return (
       <>
         <div className="max-w-2xl mx-auto px-4 py-24 text-center">
@@ -294,7 +320,7 @@ export default function AccountPage() {
                   Tôi đã đọc và đồng ý với{' '}
                   <button
                     type="button"
-                    onClick={() => setActivePolicyModal('terms')}
+                    onClick={() => openPolicyModal('terms')}
                     className="text-brand-navy underline font-semibold"
                   >
                     Điều khoản sử dụng
@@ -302,7 +328,7 @@ export default function AccountPage() {
                   và{' '}
                   <button
                     type="button"
-                    onClick={() => setActivePolicyModal('privacy')}
+                    onClick={() => openPolicyModal('privacy')}
                     className="text-brand-navy underline font-semibold"
                   >
                     Chính sách bảo mật
@@ -357,7 +383,7 @@ export default function AccountPage() {
                 <h2 className="font-golan text-xl text-brand-charcoal">{policy.title}</h2>
                 <button
                   type="button"
-                  onClick={() => setActivePolicyModal(null)}
+                  onClick={closePolicyModal}
                   className="font-san text-sm text-brand-muted hover:text-brand-charcoal"
                 >
                   Đóng
@@ -380,7 +406,8 @@ export default function AccountPage() {
 
   // === Dashboard ===
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
       {/* User header */}
       <div className="flex items-center justify-between mb-10">
         <div className="flex items-center gap-4">
@@ -601,6 +628,32 @@ export default function AccountPage() {
           </p>
         </div>
       )}
-    </div>
+      </div>
+
+      {policy && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-4">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-xl max-h-[85vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-brand-cream-dark flex items-center justify-between">
+              <h2 className="font-golan text-xl text-brand-charcoal">{policy.title}</h2>
+              <button
+                type="button"
+                onClick={closePolicyModal}
+                className="font-san text-sm text-brand-muted hover:text-brand-charcoal"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="px-6 py-5 overflow-y-auto space-y-5">
+              {policy.sections.map((section) => (
+                <section key={section.heading}>
+                  <h3 className="font-san font-semibold text-sm text-brand-charcoal mb-1">{section.heading}</h3>
+                  <p className="font-san text-sm text-brand-muted leading-relaxed">{section.body}</p>
+                </section>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

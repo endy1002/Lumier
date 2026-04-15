@@ -87,15 +87,30 @@ export default function Footer() {
             </h4>
             <ul className="space-y-3">
               {[
-                t('Chính sách bảo mật', 'Privacy Policy'),
-                t('Điều khoản dịch vụ', 'Terms of Service'),
-                t('Vận chuyển', 'Shipping'),
-                t('Đổi trả', 'Returns'),
-              ].map((label) => (
-                <li key={label}>
-                  <span className="font-san text-sm text-gray-400 hover:text-brand-amber transition-colors cursor-pointer">
-                    {label}
-                  </span>
+                {
+                  label: t('Chính sách bảo mật', 'Privacy Policy'),
+                  path: '/tai-khoan?policy=privacy',
+                },
+                {
+                  label: t('Điều khoản dịch vụ', 'Terms of Service'),
+                  path: '/tai-khoan?policy=terms',
+                },
+                {
+                  label: t('Vận chuyển', 'Shipping'),
+                  path: '/thanh-toan',
+                },
+                {
+                  label: t('Đổi trả', 'Returns'),
+                  path: '/thanh-toan',
+                },
+              ].map((item) => (
+                <li key={item.label}>
+                  <Link
+                    to={item.path}
+                    className="font-san text-sm text-gray-400 hover:text-brand-amber transition-colors"
+                  >
+                    {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>
