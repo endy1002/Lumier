@@ -95,7 +95,7 @@ const DIRECT_TRANSLATIONS = {
   'Chưa có dữ liệu sản phẩm.': 'No product data yet.',
   'Không tìm thấy sản phẩm phù hợp. Thử từ khóa khác nhé.': 'No matching products found. Try another keyword.',
   'Tác giả': 'Authors',
-  'Những ngòi bút một thời của văn học Việt.': 'Notable voices of Vietnamese literature.',
+  'Những ngòi bút lừng danh.': 'Notable voices of literature.',
   'Xem chi tiết': 'View details',
   'Chưa có dữ liệu tác giả.': 'No author data yet.',
   'Sách Nói': 'Audiobooks',

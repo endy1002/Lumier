@@ -55,7 +55,7 @@ export default function AuthorInfo({ authors = [] }) {
         {t('Tác giả', 'Authors')}
       </h2>
       <p className="font-san text-base text-brand-muted mb-8">
-        {t('Những ngòi bút một thời của văn học Việt.', 'Classic voices of Vietnamese literature.')}
+        {t('Những ngòi bút lừng danh.', 'Classic voices of literature.')}
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
