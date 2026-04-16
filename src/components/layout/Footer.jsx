@@ -28,6 +28,20 @@ export default function Footer() {
                 'Everyone has their own favorite books, their own "bedside" books. They can shape our behavior, worldview, and even mindset and skillset.'
               )}
             </p>
+            <div className="space-y-2 mb-6">
+              <h4 className="font-san text-sm font-semibold uppercase tracking-wider text-brand-gold">
+                {t('Thông tin liên hệ', 'Contact Information')}
+              </h4>
+              <p className="font-san text-sm text-gray-300">
+                {t(
+                  'Địa chỉ: 279 Nguyễn Tri Phương, phường Diên Hồng, TPHCM',
+                  'Address: 279 Nguyen Tri Phuong, Dien Hong Ward, HCMC'
+                )}
+              </p>
+              <p className="font-san text-sm text-gray-300">
+                {t('Số điện thoại: 0368534407', 'Phone: 0368534407')}
+              </p>
+            </div>
             <div className="flex gap-4">
               <a
                 href="https://facebook.com"
