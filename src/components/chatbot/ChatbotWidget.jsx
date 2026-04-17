@@ -1,14 +1,18 @@
 import { useState } from 'react';
-import { X, Send, MessageCircle } from 'lucide-react';
+import { X, MessageCircle } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../hooks/useAuth';
+import { saveChatbotPreferences } from '../../services/chatbot';
 
 export default function ChatbotWidget() {
   const { t } = useLanguage();
+  const { user, isAuthenticated } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [step, setStep] = useState(0); // 0 = initial, 1-3 = quiz, 4 = email, 5 = result
+  const [step, setStep] = useState(0); // 0 = initial, 1-3 = quiz, 4 = result
   const [answers, setAnswers] = useState({});
-  const [email, setEmail] = useState('');
   const [showBubble, setShowBubble] = useState(true);
+  const [isSavingPreferences, setIsSavingPreferences] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('idle');
 
   const quizQuestions = [
     {
@@ -69,6 +73,28 @@ export default function ChatbotWidget() {
     ),
   };
 
+  const persistPreferences = async (selectedAnswers) => {
+    if (!isAuthenticated || !user?.googleId) {
+      setSaveStatus('guest');
+      return;
+    }
+
+    setIsSavingPreferences(true);
+    setSaveStatus('idle');
+    try {
+      await saveChatbotPreferences({
+        googleId: user.googleId,
+        answers: selectedAnswers,
+      });
+      setSaveStatus('saved');
+    } catch (error) {
+      setSaveStatus('failed');
+      console.warn('Unable to save chatbot preferences', error);
+    } finally {
+      setIsSavingPreferences(false);
+    }
+  };
+
   const handleAnswer = (questionId, answer) => {
     const newAnswers = { ...answers, [questionId]: answer };
     setAnswers(newAnswers);
@@ -76,16 +102,8 @@ export default function ChatbotWidget() {
     if (step < quizQuestions.length) {
       setStep(step + 1);
     } else {
-      setStep(4); // Go to email step
-    }
-  };
-
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
-    if (email.trim()) {
-      // Save lead data (mock)
-      console.log('Lead captured:', { email, preferences: answers });
-      setStep(5); // Show result
+      setStep(4);
+      persistPreferences(newAnswers);
     }
   };
 
@@ -97,7 +115,8 @@ export default function ChatbotWidget() {
   const resetChat = () => {
     setStep(0);
     setAnswers({});
-    setEmail('');
+    setIsSavingPreferences(false);
+    setSaveStatus('idle');
   };
 
   return (
@@ -214,40 +233,43 @@ export default function ChatbotWidget() {
               <div className="space-y-3">
                 <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
                   <p className="font-san text-sm text-brand-charcoal">
-                    {t(
-                      'Tuyệt vời! Để nhận gợi ý, vui lòng nhập email của bạn nhé 📬',
-                      'Great! To receive your recommendation, please enter your email 📬'
-                    )}
-                  </p>
-                </div>
-                <form onSubmit={handleEmailSubmit} className="flex gap-2">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="email@example.com"
-                    className="flex-1 px-3 py-2.5 border border-brand-cream-dark rounded-xl font-san text-sm"
-                    required
-                  />
-                  <button
-                    type="submit"
-                    className="p-2.5 bg-brand-navy text-white rounded-xl hover:bg-brand-deep-blue"
-                  >
-                    <Send size={16} />
-                  </button>
-                </form>
-              </div>
-            )}
-
-            {step === 5 && (
-              <div className="space-y-3">
-                <div className="bg-brand-cream rounded-2xl rounded-bl-none px-4 py-3">
-                  <p className="font-san text-sm text-brand-charcoal">
                     {t('🎉 Dựa trên sở thích của bạn, mình gợi ý:', '🎉 Based on your preferences, here is our pick:')}
                   </p>
                   <p className="font-san text-sm font-semibold text-brand-navy mt-2">
                     {getRecommendation()}
                   </p>
+                  <p className="font-san text-sm text-brand-charcoal">
+                    {t(
+                      'Lumier sẽ gửi đến bạn những đầu sách phù hợp nhất qua email tài khoản của bạn nhé ✨',
+                      'Lumier will send the best-fit book picks to your account email ✨'
+                    )}
+                  </p>
+                  {isSavingPreferences && (
+                    <p className="font-san text-xs text-brand-muted mt-2">
+                      {t('Lumier đang lưu gu sách của bạn...', 'Lumier is saving your reading taste...')}
+                    </p>
+                  )}
+                  {saveStatus === 'saved' && (
+                    <p className="font-san text-xs text-green-600 mt-2">
+                      {t('Đã lưu gu sách vào tài khoản của bạn.', 'Your reading taste has been saved to your account.')}
+                    </p>
+                  )}
+                  {saveStatus === 'guest' && (
+                    <p className="font-san text-xs text-brand-muted mt-2">
+                      {t(
+                        'Đăng nhập để Lumier lưu lựa chọn này vào tài khoản của bạn.',
+                        'Sign in so Lumier can save these choices to your account.'
+                      )}
+                    </p>
+                  )}
+                  {saveStatus === 'failed' && (
+                    <p className="font-san text-xs text-red-500 mt-2">
+                      {t(
+                        'Chưa thể lưu vào tài khoản lúc này, nhưng Lumier vẫn ghi nhận để gợi ý cho bạn.',
+                        'We could not save to your account right now, but Lumier still noted it for your recommendation.'
+                      )}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={resetChat}

@@ -40,6 +40,18 @@ public class UserProfile {
   @Column(name = "marketing_opt_in", nullable = false)
   private boolean marketingOptIn = true;
 
+  @Column(name = "chatbot_genre_option")
+  private String chatbotGenreOption;
+
+  @Column(name = "chatbot_reading_time_option")
+  private String chatbotReadingTimeOption;
+
+  @Column(name = "chatbot_recent_book_option")
+  private String chatbotRecentBookOption;
+
+  @Column(name = "chatbot_preferences_updated_at")
+  private OffsetDateTime chatbotPreferencesUpdatedAt;
+
   @Column(name = "last_order_at")
   private OffsetDateTime lastOrderAt;
 
@@ -123,6 +135,38 @@ public class UserProfile {
 
   public void setLastOrderAt(OffsetDateTime lastOrderAt) {
     this.lastOrderAt = lastOrderAt;
+  }
+
+  public String getChatbotGenreOption() {
+    return chatbotGenreOption;
+  }
+
+  public void setChatbotGenreOption(String chatbotGenreOption) {
+    this.chatbotGenreOption = chatbotGenreOption;
+  }
+
+  public String getChatbotReadingTimeOption() {
+    return chatbotReadingTimeOption;
+  }
+
+  public void setChatbotReadingTimeOption(String chatbotReadingTimeOption) {
+    this.chatbotReadingTimeOption = chatbotReadingTimeOption;
+  }
+
+  public String getChatbotRecentBookOption() {
+    return chatbotRecentBookOption;
+  }
+
+  public void setChatbotRecentBookOption(String chatbotRecentBookOption) {
+    this.chatbotRecentBookOption = chatbotRecentBookOption;
+  }
+
+  public OffsetDateTime getChatbotPreferencesUpdatedAt() {
+    return chatbotPreferencesUpdatedAt;
+  }
+
+  public void setChatbotPreferencesUpdatedAt(OffsetDateTime chatbotPreferencesUpdatedAt) {
+    this.chatbotPreferencesUpdatedAt = chatbotPreferencesUpdatedAt;
   }
 
   public OffsetDateTime getCreatedAt() {

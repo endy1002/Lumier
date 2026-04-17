@@ -1,6 +1,5 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { SpeedInsights } from '@vercel/speed-insights/react';
-import { Analytics } from '@vercel/analytics/react';
 import { CartProvider } from './context/CartContext';
 import { useUTM } from './hooks/useUTM';
 import Layout from './components/layout/Layout';
@@ -37,12 +36,26 @@ function AppContent() {
 }
 
 export default function App() {
+  useEffect(() => {
+    const websiteId = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+    const scriptUrl = import.meta.env.VITE_UMAMI_SCRIPT_URL || 'https://cloud.umami.is/script.js';
+
+    if (!websiteId || document.getElementById('umami-analytics-script')) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'umami-analytics-script';
+    script.defer = true;
+    script.src = scriptUrl;
+    script.setAttribute('data-website-id', websiteId);
+    document.head.appendChild(script);
+  }, []);
+
   return (
     <BrowserRouter>
       <CartProvider>
         <AppContent />
-        <Analytics />
-        <SpeedInsights />
       </CartProvider>
     </BrowserRouter>
   );

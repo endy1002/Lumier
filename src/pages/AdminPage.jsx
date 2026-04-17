@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ShieldAlert, ShieldCheck, Plus, Trash2, Upload } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useLanguage } from '../context/LanguageContext';
 import {
   createAdminBlog,
   createAdminAuthor,
@@ -8,8 +9,10 @@ import {
   deleteAdminBlog,
   deleteAdminAuthor,
   deleteAdminProduct,
+  fetchAdminChatbotInsights,
   fetchAdminBlogs,
   fetchAdminExploreDashboard,
+  fetchAdminUmamiAnalytics,
   fetchAdminOrders,
   fetchAdminUsers,
   updateAdminBlog,
@@ -151,6 +154,8 @@ function toBlogForm(item) {
 }
 
 export default function AdminPage() {
+  const isAnalyticsEnabled = false;
+  const { t } = useLanguage();
   const { user, isAuthenticated, isLoading, loginWithGoogle } = useAuth();
   const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN';
 
@@ -159,6 +164,34 @@ export default function AdminPage() {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [blogs, setBlogs] = useState([]);
+  const [chatbotInsights, setChatbotInsights] = useState({
+    totalProfilesWithPreferences: 0,
+    questions: [],
+    entries: [],
+  });
+  const [umamiAnalytics, setUmamiAnalytics] = useState({
+    configured: false,
+    message: null,
+    startAt: null,
+    endAt: null,
+    visitors: 0,
+    pageviews: 0,
+    visits: 0,
+    bounces: 0,
+    totalTime: 0,
+    bounceRate: null,
+    timeline: [],
+    pages: [],
+    referrers: [],
+    browsers: [],
+    operatingSystems: [],
+    devices: [],
+    channels: [],
+    countries: [],
+  });
+  const [analyticsDays, setAnalyticsDays] = useState(7);
+  const [isAnalyticsFetching, setIsAnalyticsFetching] = useState(false);
+  const [analyticsLastFetchedAt, setAnalyticsLastFetchedAt] = useState(null);
 
   const [productForm, setProductForm] = useState(EMPTY_PRODUCT);
   const [authorForm, setAuthorForm] = useState(EMPTY_AUTHOR);
@@ -179,6 +212,90 @@ export default function AdminPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const statusAnchorRef = useRef(null);
+
+  const chatbotQuestionLabels = useMemo(
+    () => ({
+      genre: t('Thể loại sách yêu thích', 'Favorite book genres'),
+      readingTime: t('Thời điểm đọc sách', 'Reading time preference'),
+      recentBook: t('Cuốn sách gần nhất', 'Latest book read'),
+    }),
+    [t]
+  );
+
+  const chatbotOptionLabels = useMemo(
+    () => ({
+      classic: t('Văn học kinh điển', 'Classic literature'),
+      selfhelp: t('Self-help', 'Self-help'),
+      novel: t('Tiểu thuyết', 'Novels'),
+      science: t('Khoa học', 'Science'),
+      poetry: t('Thơ ca', 'Poetry'),
+      morning: t('Buổi sáng', 'Morning'),
+      noon: t('Trưa', 'Noon'),
+      evening: t('Chiều tối', 'Evening'),
+      'before-sleep': t('Trước khi ngủ', 'Before sleeping'),
+      anytime: t('Bất kỳ lúc nào', 'Anytime'),
+      alchemist: t('Nhà Giả Kim', 'The Alchemist'),
+      'how-to-win': t('Đắc Nhân Tâm', 'How to Win Friends and Influence People'),
+      'yellow-flowers': t('Tôi Thấy Hoa Vàng Trên Cỏ Xanh', 'Yellow Flowers on the Green Grass'),
+      'youth-worth': t('Tuổi Trẻ Đáng Giá Bao Nhiêu', 'How Much Is Youth Worth?'),
+      other: t('Sách khác', 'Other book'),
+    }),
+    [t]
+  );
+
+  const analyticsView = useMemo(() => {
+    const timeline = Array.isArray(umamiAnalytics.timeline)
+      ? umamiAnalytics.timeline.map((item, index) => ({
+        index,
+        label: item?.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : `#${index + 1}`,
+        pageviews: Number(item?.pageviews || 0),
+        sessions: Number(item?.sessions || 0),
+      }))
+      : [];
+
+    const timelinePeak = Math.max(...timeline.map((item) => item.pageviews), 1);
+    const avgPagesPerVisit = umamiAnalytics.visits > 0
+      ? umamiAnalytics.pageviews / umamiAnalytics.visits
+      : null;
+
+    return {
+      timeline,
+      timelinePeak,
+      avgPagesPerVisit,
+    };
+  }, [umamiAnalytics]);
+
+  const renderBreakdownRows = (rows) => {
+    if (!Array.isArray(rows) || rows.length === 0) {
+      return (
+        <p className="font-san text-sm text-brand-muted">
+          {t('Chưa có dữ liệu.', 'No data available yet.')}
+        </p>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        {rows.map((row, index) => {
+          const visitors = Number(row?.visitors || 0);
+          const pageviews = Number(row?.pageviews || 0);
+          const ratio = visitors > 0 ? ((pageviews / visitors).toFixed(2)) : '--';
+
+          return (
+            <div key={`${row?.name || 'item'}-${index}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b last:border-b-0 py-2">
+              <p className="font-san text-sm text-brand-charcoal truncate" title={row?.name || ''}>{row?.name || '-'}</p>
+              <p className="font-san text-xs text-brand-muted min-w-[110px] text-right">
+                {t('Visitors', 'Visitors')}: {visitors.toLocaleString('vi-VN')}
+              </p>
+              <p className="font-san text-xs text-brand-muted min-w-[120px] text-right">
+                {t('Pages/Visitor', 'Pages/Visitor')}: {ratio}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   const resetFeedbackState = ({ includeUpload = true } = {}) => {
     setError('');
@@ -232,7 +349,7 @@ export default function AdminPage() {
     [blogs, blogForm.id]
   );
 
-  const loadAll = async () => {
+  const loadCoreData = async () => {
     if (!user?.googleId) {
       return;
     }
@@ -240,17 +357,19 @@ export default function AdminPage() {
     setIsFetching(true);
     setError('');
     try {
-      const [exploreData, orderData, userData, blogData] = await Promise.all([
+      const [exploreData, orderData, userData, blogData, chatbotData] = await Promise.all([
         fetchAdminExploreDashboard(user.googleId),
         fetchAdminOrders(user.googleId),
         fetchAdminUsers(user.googleId),
         fetchAdminBlogs(user.googleId),
+        fetchAdminChatbotInsights(user.googleId),
       ]);
 
       setDashboard(exploreData);
       setOrders(orderData);
       setUsers(userData);
       setBlogs(blogData);
+      setChatbotInsights(chatbotData);
 
       if (!productForm.id && exploreData.products[0]) {
         setProductForm(toProductForm(exploreData.products[0]));
@@ -271,11 +390,63 @@ export default function AdminPage() {
     }
   };
 
+  const loadAnalyticsData = async () => {
+    if (!user?.googleId) {
+      return;
+    }
+
+    setIsAnalyticsFetching(true);
+    setError('');
+    try {
+      const analyticsData = await fetchAdminUmamiAnalytics({
+        googleId: user.googleId,
+        days: analyticsDays,
+      });
+      setUmamiAnalytics(analyticsData);
+      setAnalyticsLastFetchedAt(new Date());
+    } catch (err) {
+      setError(err?.response?.data?.error || err?.message || 'Không thể tải Umami analytics.');
+    } finally {
+      setIsAnalyticsFetching(false);
+    }
+  };
+
+  const loadAll = async () => {
+    await loadCoreData();
+    if (isAnalyticsEnabled && tab === 'analytics') {
+      await loadAnalyticsData();
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated && isAdmin && user?.googleId) {
-      loadAll();
+      loadCoreData();
     }
   }, [isAuthenticated, isAdmin, user?.googleId]);
+
+  useEffect(() => {
+    if (isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics') {
+      loadAnalyticsData();
+    }
+  }, [isAnalyticsEnabled, tab, analyticsDays, isAuthenticated, isAdmin, user?.googleId]);
+
+  useEffect(() => {
+    if (!(isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics')) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      loadAnalyticsData();
+    }, 60000);
+
+    return () => clearInterval(timer);
+  }, [isAnalyticsEnabled, isAuthenticated, isAdmin, user?.googleId, tab, analyticsDays]);
+
+  useEffect(() => {
+    if (!isAnalyticsEnabled && tab === 'analytics') {
+      setTab('products');
+    }
+  }, [isAnalyticsEnabled, tab]);
 
   const handleLogin = async () => {
     setError('');
@@ -772,14 +943,23 @@ export default function AdminPage() {
       </div>
 
       <div className="flex flex-wrap gap-2 bg-brand-cream rounded-xl p-1">
-        {['products', 'authors', 'audiobooks', 'blogs', 'orders', 'users'].map((key) => (
+        {[
+          'products',
+          'authors',
+          'audiobooks',
+          'blogs',
+          'orders',
+          'users',
+          'chatbot',
+          ...(isAnalyticsEnabled ? ['analytics'] : []),
+        ].map((key) => (
           <button
             key={key}
             type="button"
             onClick={() => setTab(key)}
             className={`px-4 py-2 rounded-lg font-san text-sm ${tab === key ? 'bg-white shadow text-brand-charcoal' : 'text-brand-muted'}`}
           >
-            {key.toUpperCase()}
+            {key === 'chatbot' ? 'CHATBOT' : key === 'analytics' ? 'ANALYTICS' : key.toUpperCase()}
           </button>
         ))}
       </div>
@@ -1217,6 +1397,282 @@ export default function AdminPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === 'chatbot' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm">
+            <h2 className="font-golan text-lg mb-2">
+              {t('Tổng hợp lựa chọn từ Chatbot', 'Chatbot Preference Insights')}
+            </h2>
+            <p className="font-san text-sm text-brand-muted">
+              {t('Số tài khoản đã lưu lựa chọn: ', 'Accounts with saved preferences: ')}
+              <span className="font-semibold text-brand-charcoal">{chatbotInsights.totalProfilesWithPreferences}</span>
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-1 gap-4">
+              {chatbotInsights.questions.map((question) => (
+                <div key={question.questionKey} className="bg-white rounded-2xl p-5 shadow-sm">
+                  <h3 className="font-san text-base font-semibold text-brand-charcoal">
+                    {chatbotQuestionLabels[question.questionKey] || question.questionKey}
+                  </h3>
+                  <p className="font-san text-xs text-brand-muted mt-1 mb-3">
+                    {t('Số phản hồi: ', 'Responses: ')}
+                    {question.responses || 0}
+                  </p>
+                  <div className="space-y-2">
+                    {question.options?.map((option) => {
+                      const responses = Number(question.responses || 0);
+                      const count = Number(option.count || 0);
+                      const ratio = responses > 0 ? Math.round((count / responses) * 100) : 0;
+
+                      return (
+                        <div key={option.optionKey}>
+                          <div className="flex items-center justify-between font-san text-sm text-brand-charcoal">
+                            <span>{chatbotOptionLabels[option.optionKey] || option.optionKey}</span>
+                            <span>{count} ({ratio}%)</span>
+                          </div>
+                          <div className="mt-1 h-1.5 rounded-full bg-brand-cream">
+                            <div className="h-full rounded-full bg-brand-navy" style={{ width: `${ratio}%` }} />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <h3 className="font-golan text-lg mb-3">
+                {t('Danh sách user đã chọn trong chatbot', 'User Preference List From Chatbot')}
+              </h3>
+              <div className="overflow-auto max-h-[640px]">
+                <table className="w-full min-w-[760px] font-san text-sm">
+                  <thead>
+                    <tr className="text-left border-b">
+                      <th className="py-2 pr-3">{t('User', 'User')}</th>
+                      <th className="py-2 pr-3">Email</th>
+                      <th className="py-2 pr-3">{t('Thể loại', 'Genre')}</th>
+                      <th className="py-2 pr-3">{t('Thời điểm đọc', 'Reading time')}</th>
+                      <th className="py-2 pr-3">{t('Sách gần nhất', 'Recent book')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {chatbotInsights.entries?.map((entry) => (
+                      <tr key={entry.userId || `${entry.email}-${entry.updatedAt || 'na'}`} className="border-b last:border-b-0">
+                        <td className="py-2 pr-3">{entry.name || '-'}</td>
+                        <td className="py-2 pr-3">{entry.email || '-'}</td>
+                        <td className="py-2 pr-3">{chatbotOptionLabels[entry.genreOption] || entry.genreOption || '-'}</td>
+                        <td className="py-2 pr-3">{chatbotOptionLabels[entry.readingTimeOption] || entry.readingTimeOption || '-'}</td>
+                        <td className="py-2 pr-3">{chatbotOptionLabels[entry.recentBookOption] || entry.recentBookOption || '-'}</td>
+                      </tr>
+                    ))}
+                    {(!chatbotInsights.entries || chatbotInsights.entries.length === 0) && (
+                      <tr>
+                        <td className="py-4 text-brand-muted" colSpan={5}>
+                          {t('Chưa có dữ liệu lựa chọn từ chatbot.', 'No chatbot preference data yet.')}
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'analytics' && (
+        <div className="space-y-4">
+          <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <h2 className="font-golan text-lg mb-2">{t('Umami Analytics', 'Umami Analytics')}</h2>
+              <p className="font-san text-sm text-brand-muted">
+                {t(
+                  'Dữ liệu được đồng bộ từ  API để theo dõi tập trung trong admin.',
+                  'Data is synced from the API for centralized admin monitoring.'
+                )}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="font-san text-sm text-brand-charcoal">{t('Khoảng thời gian', 'Window')}</label>
+              <select
+                value={analyticsDays}
+                onChange={(e) => setAnalyticsDays(Number(e.target.value))}
+                className="border rounded-lg px-3 py-2 font-san text-sm"
+              >
+                <option value={1}>24h</option>
+                <option value={7}>7 {t('ngày', 'days')}</option>
+              </select>
+              <button
+                type="button"
+                onClick={loadAnalyticsData}
+                className="px-4 py-2 bg-brand-navy text-white rounded-lg font-san text-sm"
+              >
+                {t('Làm mới', 'Refresh')}
+              </button>
+            </div>
+          </div>
+
+          <p className="font-san text-xs text-brand-muted px-1">
+            {isAnalyticsFetching
+              ? t('Đang tải analytics...', 'Refreshing analytics...')
+              : t('Lần cập nhật gần nhất: ', 'Last updated: ')
+                + (analyticsLastFetchedAt
+                  ? analyticsLastFetchedAt.toLocaleString('vi-VN')
+                  : '--')}
+          </p>
+
+          {!umamiAnalytics.configured && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
+              <p className="font-san text-sm text-amber-800">
+                {umamiAnalytics.message || t('Chưa cấu hình Umami trong backend.', 'Umami is not configured in backend yet.')}
+              </p>
+              <p className="font-san text-xs text-amber-700 mt-2">
+                {t(
+                  'Cần set: UMAMI_API_KEY và UMAMI_WEBSITE_ID (tuỳ chọn UMAMI_API_BASE_URL).',
+                  'Required env vars: UMAMI_API_KEY and UMAMI_WEBSITE_ID (optional UMAMI_API_BASE_URL).'
+                )}
+              </p>
+            </div>
+          )}
+
+          {umamiAnalytics.configured && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Visitors', 'Visitors')}</p>
+                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                    {Number(umamiAnalytics.visitors || 0).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Page Views', 'Page Views')}</p>
+                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                    {Number(umamiAnalytics.pageviews || 0).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Visits', 'Visits')}</p>
+                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                    {Number(umamiAnalytics.visits || 0).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Bounce Rate', 'Bounce Rate')}</p>
+                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                    {umamiAnalytics.bounceRate == null
+                      ? '--'
+                      : `${Number(umamiAnalytics.bounceRate).toFixed(1)}%`}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Avg. Pages / Visit', 'Avg. Pages / Visit')}</p>
+                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
+                    {analyticsView.avgPagesPerVisit == null ? '--' : analyticsView.avgPagesPerVisit.toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Bounces', 'Bounces')}</p>
+                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
+                    {Number(umamiAnalytics.bounces || 0).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <p className="font-san text-sm text-brand-muted">{t('Avg. Time / Visit', 'Avg. Time / Visit')}</p>
+                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
+                    {umamiAnalytics.visits > 0
+                      ? `${Math.round((umamiAnalytics.totalTime || 0) / umamiAnalytics.visits)}s`
+                      : '--'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="font-golan text-lg">{t('Traffic Timeline (Page Views)', 'Traffic Timeline (Page Views)')}</h3>
+                  <p className="font-san text-xs text-brand-muted">
+                    {t('Khoảng dữ liệu', 'Data window')}: {' '}
+                    {umamiAnalytics.startAt ? new Date(umamiAnalytics.startAt).toLocaleString('vi-VN') : '-'}
+                    {' '}→{' '}
+                    {umamiAnalytics.endAt ? new Date(umamiAnalytics.endAt).toLocaleString('vi-VN') : '-'}
+                  </p>
+                </div>
+                <div className="space-y-2 max-h-[320px] overflow-auto pr-1">
+                  {analyticsView.timeline.map((point) => {
+                    const width = Math.max(6, Math.round((point.pageviews / analyticsView.timelinePeak) * 100));
+                    return (
+                      <div key={point.index} className="grid grid-cols-[170px_1fr_auto] items-center gap-3">
+                        <p className="font-san text-xs text-brand-muted truncate">{point.label}</p>
+                        <div className="h-6 bg-brand-cream rounded-md overflow-hidden">
+                          <div className="h-full bg-brand-navy/85" style={{ width: `${width}%` }} />
+                        </div>
+                        <p className="font-san text-sm font-semibold text-brand-charcoal min-w-[58px] text-right">{point.pageviews}</p>
+                      </div>
+                    );
+                  })}
+                  {analyticsView.timeline.length === 0 && (
+                    <p className="font-san text-sm text-brand-muted">
+                      {t('Chưa có timeline analytics cho khoảng thời gian đã chọn.', 'No analytics timeline available for selected range.')}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <h3 className="font-golan text-lg mb-3">{t('Pages', 'Pages')}</h3>
+                  {renderBreakdownRows(umamiAnalytics.pages)}
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <h3 className="font-golan text-lg mb-3">{t('Referrers', 'Referrers')}</h3>
+                  {renderBreakdownRows(umamiAnalytics.referrers)}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <h3 className="font-golan text-lg mb-3">{t('Environment', 'Environment')}</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Browsers', 'Browsers')}</p>
+                      {renderBreakdownRows(umamiAnalytics.browsers)}
+                    </div>
+                    <div>
+                      <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Operating Systems', 'Operating Systems')}</p>
+                      {renderBreakdownRows(umamiAnalytics.operatingSystems)}
+                    </div>
+                    <div>
+                      <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Devices', 'Devices')}</p>
+                      {renderBreakdownRows(umamiAnalytics.devices)}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                  <h3 className="font-golan text-lg mb-3">{t('Traffic', 'Traffic')}</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Channels', 'Channels')}</p>
+                      {renderBreakdownRows(umamiAnalytics.channels)}
+                    </div>
+                    <div>
+                      <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Countries', 'Countries')}</p>
+                      {renderBreakdownRows(umamiAnalytics.countries)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

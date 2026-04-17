@@ -1,8 +1,10 @@
 package com.lumier.backend.controller;
 
 import com.lumier.backend.dto.admin.AdminOrderResponse;
+import com.lumier.backend.dto.admin.AdminChatbotInsightsResponse;
 import com.lumier.backend.dto.admin.AdminUpdateOrderStatusRequest;
 import com.lumier.backend.dto.admin.AdminUpdateUserRoleRequest;
+import com.lumier.backend.dto.admin.AdminUmamiAnalyticsResponse;
 import com.lumier.backend.dto.admin.AdminUserResponse;
 import com.lumier.backend.service.AdminManagementService;
 import java.util.List;
@@ -43,6 +45,19 @@ public class AdminManagementController {
   @GetMapping("/users")
   public List<AdminUserResponse> users(@RequestParam String googleId) {
     return adminManagementService.getUsers(googleId);
+  }
+
+  @GetMapping("/chatbot-insights")
+  public AdminChatbotInsightsResponse chatbotInsights(@RequestParam String googleId) {
+    return adminManagementService.getChatbotInsights(googleId);
+  }
+
+  @GetMapping("/umami-analytics")
+  public AdminUmamiAnalyticsResponse umamiAnalytics(
+    @RequestParam String googleId,
+    @RequestParam(required = false) Integer days
+  ) {
+    return adminManagementService.getUmamiAnalytics(googleId, days);
   }
 
   @PutMapping("/users/{userId}/role")

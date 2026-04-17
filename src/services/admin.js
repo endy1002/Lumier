@@ -151,6 +151,48 @@ export async function fetchAdminUsers(googleId) {
   return data || [];
 }
 
+export async function fetchAdminChatbotInsights(googleId) {
+  const { data } = await api.get('/admin/management/chatbot-insights', {
+    params: { googleId },
+  });
+
+  return {
+    totalProfilesWithPreferences: Number(data?.totalProfilesWithPreferences || 0),
+    questions: Array.isArray(data?.questions) ? data.questions : [],
+    entries: Array.isArray(data?.entries) ? data.entries : [],
+  };
+}
+
+export async function fetchAdminUmamiAnalytics({ googleId, days }) {
+  const { data } = await api.get('/admin/management/umami-analytics', {
+    params: {
+      googleId,
+      ...(days ? { days } : {}),
+    },
+  });
+
+  return {
+    configured: Boolean(data?.configured),
+    message: data?.message || null,
+    startAt: data?.startAt || null,
+    endAt: data?.endAt || null,
+    visitors: Number(data?.visitors || 0),
+    pageviews: Number(data?.pageviews || 0),
+    visits: Number(data?.visits || 0),
+    bounces: Number(data?.bounces || 0),
+    totalTime: Number(data?.totalTime || 0),
+    bounceRate: data?.bounceRate == null ? null : Number(data.bounceRate),
+    timeline: Array.isArray(data?.timeline) ? data.timeline : [],
+    pages: Array.isArray(data?.pages) ? data.pages : [],
+    referrers: Array.isArray(data?.referrers) ? data.referrers : [],
+    browsers: Array.isArray(data?.browsers) ? data.browsers : [],
+    operatingSystems: Array.isArray(data?.operatingSystems) ? data.operatingSystems : [],
+    devices: Array.isArray(data?.devices) ? data.devices : [],
+    channels: Array.isArray(data?.channels) ? data.channels : [],
+    countries: Array.isArray(data?.countries) ? data.countries : [],
+  };
+}
+
 export async function updateAdminUserRole({ googleId, userId, role }) {
   const { data } = await api.put(
     `/admin/management/users/${userId}/role`,

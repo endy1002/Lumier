@@ -42,3 +42,7 @@ app:
     public-base-url: ${SUPABASE_STORAGE_PUBLIC_BASE_URL:}
     request-timeout-seconds: ${SUPABASE_STORAGE_REQUEST_TIMEOUT_SECONDS:180}
     allow-local-fallback: ${SUPABASE_STORAGE_ALLOW_LOCAL_FALLBACK:false}
+  umami:
+    base-url: ${UMAMI_API_BASE_URL:https://api.umami.is/v1}
+    api-key: ${UMAMI_API_KEY:}
+    website-id: ${UMAMI_WEBSITE_ID:}
