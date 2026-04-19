@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 function AuthorModal({ author, onClose }) {
@@ -41,13 +41,27 @@ function AuthorModal({ author, onClose }) {
 }
 
 export default function AuthorInfo({ authors = [] }) {
+  const PAGE_SIZE = 3;
   const [activeId, setActiveId] = useState(null);
+  const [pageIndex, setPageIndex] = useState(0);
   const { t, translateText } = useLanguage();
+
+  const pageCount = Math.max(1, Math.ceil(authors.length / PAGE_SIZE));
+  const visibleAuthors = useMemo(
+    () => authors.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE),
+    [authors, pageIndex]
+  );
 
   const activeAuthor = useMemo(
     () => authors.find((item) => item.id === activeId) || null,
     [authors, activeId]
   );
+
+  useEffect(() => {
+    if (pageIndex > pageCount - 1) {
+      setPageIndex(Math.max(0, pageCount - 1));
+    }
+  }, [pageCount, pageIndex]);
 
   return (
     <div>
@@ -58,8 +72,36 @@ export default function AuthorInfo({ authors = [] }) {
         {t('Những ngòi bút lừng danh.', 'Classic voices of literature.')}
       </p>
 
+      {authors.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-san text-sm text-brand-muted">
+            {t('Trang {current}/{total}', 'Page {current}/{total}', { current: pageIndex + 1, total: pageCount })}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
+              disabled={pageIndex === 0}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-brand-cream-dark font-san text-sm text-brand-charcoal disabled:opacity-40"
+            >
+              <ChevronLeft size={14} />
+              {t('Trước', 'Back')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPageIndex((prev) => Math.min(pageCount - 1, prev + 1))}
+              disabled={pageIndex >= pageCount - 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-brand-cream-dark font-san text-sm text-brand-charcoal disabled:opacity-40"
+            >
+              {t('Tiếp', 'Next')}
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {authors.map((author) => {
+        {visibleAuthors.map((author) => {
           const avatarSrc = author.avatarUrl || '/images/authors/01.jpeg';
           return (
             <button

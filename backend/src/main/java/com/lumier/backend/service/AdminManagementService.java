@@ -131,9 +131,9 @@ public class AdminManagementService {
   }
 
   @Transactional(readOnly = true)
-  public AdminUmamiAnalyticsResponse getUmamiAnalytics(String googleId, Integer days) {
+  public AdminUmamiAnalyticsResponse getUmamiAnalytics(String googleId, Integer days, String period, Long startAt, Long endAt) {
     adminAuthorizationService.requireAdmin(googleId);
-    return umamiAnalyticsService.fetchAnalytics(days);
+    return umamiAnalyticsService.fetchAnalytics(days, period, startAt, endAt);
   }
 
   @Transactional

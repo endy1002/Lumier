@@ -55,9 +55,12 @@ public class AdminManagementController {
   @GetMapping("/umami-analytics")
   public AdminUmamiAnalyticsResponse umamiAnalytics(
     @RequestParam String googleId,
-    @RequestParam(required = false) Integer days
+    @RequestParam(required = false) Integer days,
+    @RequestParam(required = false) String period,
+    @RequestParam(required = false) Long startAt,
+    @RequestParam(required = false) Long endAt
   ) {
-    return adminManagementService.getUmamiAnalytics(googleId, days);
+    return adminManagementService.getUmamiAnalytics(googleId, days, period, startAt, endAt);
   }
 
   @PutMapping("/users/{userId}/role")

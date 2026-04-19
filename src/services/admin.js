@@ -163,11 +163,14 @@ export async function fetchAdminChatbotInsights(googleId) {
   };
 }
 
-export async function fetchAdminUmamiAnalytics({ googleId, days }) {
+export async function fetchAdminUmamiAnalytics({ googleId, days, period, startAt, endAt }) {
   const { data } = await api.get('/admin/management/umami-analytics', {
     params: {
       googleId,
       ...(days ? { days } : {}),
+      ...(period ? { period } : {}),
+      ...(startAt ? { startAt } : {}),
+      ...(endAt ? { endAt } : {}),
     },
   });
 

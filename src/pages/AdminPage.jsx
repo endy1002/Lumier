@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ShieldAlert, ShieldCheck, Plus, Trash2, Upload } from 'lucide-react';
+import { ShieldAlert, ShieldCheck, Plus, Trash2, Upload, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../context/LanguageContext';
 import {
@@ -85,6 +85,76 @@ const EMPTY_BLOG = {
   publishedAt: '',
 };
 
+const ANALYTICS_PERIOD_OPTIONS = [
+  { value: 'last-24-hours', labelVi: '24 giờ qua', labelEn: 'Last 24 hours' },
+  { value: 'last-3-days', labelVi: '3 ngày qua', labelEn: 'Last 3 days' },
+  { value: 'last-7-days', labelVi: '7 ngày qua', labelEn: 'Last 7 days' },
+  { value: 'last-30-days', labelVi: '30 ngày qua', labelEn: 'Last 30 days' },
+  { value: 'custom', labelVi: 'Tuỳ chọn', labelEn: 'Custom range' },
+];
+
+const COUNTRY_NAME_RESOLVER = typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function'
+  ? new Intl.DisplayNames(['vi', 'en'], { type: 'region' })
+  : null;
+
+function getCountryDisplayName(value) {
+  const raw = String(value || '').trim();
+  if (!raw) {
+    return '-';
+  }
+
+  const normalized = raw.toUpperCase();
+  if (COUNTRY_NAME_RESOLVER && /^[A-Z]{2}$/.test(normalized)) {
+    const resolved = COUNTRY_NAME_RESOLVER.of(normalized);
+    if (resolved && resolved !== normalized) {
+      return resolved;
+    }
+  }
+
+  return raw;
+}
+
+function toDatetimeLocalInput(ms) {
+  if (!ms) {
+    return '';
+  }
+  const date = new Date(ms);
+  const timezoneOffset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function getPresetDurationMs(period) {
+  switch (period) {
+    case 'last-24-hours':
+      return 24 * 60 * 60 * 1000;
+    case 'last-3-days':
+      return 3 * 24 * 60 * 60 * 1000;
+    case 'last-7-days':
+      return 7 * 24 * 60 * 60 * 1000;
+    case 'last-30-days':
+      return 30 * 24 * 60 * 60 * 1000;
+    default:
+      return null;
+  }
+}
+
+function formatTimelineTick(timestamp, durationMs) {
+  if (!timestamp) {
+    return '-';
+  }
+
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) {
+    return '-';
+  }
+
+  if (durationMs != null && durationMs <= 48 * 60 * 60 * 1000) {
+    return date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+}
+
 function toProductForm(item) {
   return {
     ...EMPTY_PRODUCT,
@@ -154,7 +224,7 @@ function toBlogForm(item) {
 }
 
 export default function AdminPage() {
-  const isAnalyticsEnabled = false;
+  const isAnalyticsEnabled = true;
   const { t } = useLanguage();
   const { user, isAuthenticated, isLoading, loginWithGoogle } = useAuth();
   const isAdmin = String(user?.role || '').toUpperCase() === 'ADMIN';
@@ -189,7 +259,10 @@ export default function AdminPage() {
     channels: [],
     countries: [],
   });
-  const [analyticsDays, setAnalyticsDays] = useState(7);
+  const [analyticsPeriod, setAnalyticsPeriod] = useState('last-24-hours');
+  const [analyticsCustomStart, setAnalyticsCustomStart] = useState('');
+  const [analyticsCustomEnd, setAnalyticsCustomEnd] = useState('');
+  const [analyticsHoveredBar, setAnalyticsHoveredBar] = useState(null);
   const [isAnalyticsFetching, setIsAnalyticsFetching] = useState(false);
   const [analyticsLastFetchedAt, setAnalyticsLastFetchedAt] = useState(null);
 
@@ -243,29 +316,104 @@ export default function AdminPage() {
     [t]
   );
 
+  const hasValidCustomRange = useMemo(() => {
+    if (analyticsPeriod !== 'custom') {
+      return true;
+    }
+    if (!analyticsCustomStart || !analyticsCustomEnd) {
+      return false;
+    }
+    const start = new Date(analyticsCustomStart);
+    const end = new Date(analyticsCustomEnd);
+    return !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime()) && start < end;
+  }, [analyticsPeriod, analyticsCustomStart, analyticsCustomEnd]);
+
   const analyticsView = useMemo(() => {
     const timeline = Array.isArray(umamiAnalytics.timeline)
       ? umamiAnalytics.timeline.map((item, index) => ({
         index,
         label: item?.timestamp ? new Date(item.timestamp).toLocaleString('vi-VN') : `#${index + 1}`,
+        timestamp: item?.timestamp || null,
         pageviews: Number(item?.pageviews || 0),
         sessions: Number(item?.sessions || 0),
       }))
       : [];
 
-    const timelinePeak = Math.max(...timeline.map((item) => item.pageviews), 1);
-    const avgPagesPerVisit = umamiAnalytics.visits > 0
-      ? umamiAnalytics.pageviews / umamiAnalytics.visits
+    const timelinePeak = Math.max(
+      ...timeline.map((item) => Math.max(item.sessions, item.pageviews)),
+      1
+    );
+    const roundedPeak = timelinePeak <= 4 ? 4 : Math.ceil(timelinePeak / 5) * 5;
+    const avgVisitDurationSeconds = umamiAnalytics.visits > 0
+      ? Math.round((umamiAnalytics.totalTime || 0) / umamiAnalytics.visits)
       : null;
+
+    const chartWidth = 980;
+    const chartHeight = 320;
+    const chartPadding = { top: 20, right: 24, bottom: 42, left: 24 };
+    const innerWidth = chartWidth - chartPadding.left - chartPadding.right;
+    const innerHeight = chartHeight - chartPadding.top - chartPadding.bottom;
+    const barGap = 10;
+    const barWidth = timeline.length > 0
+      ? Math.max(10, (innerWidth - barGap * Math.max(0, timeline.length - 1)) / timeline.length)
+      : 14;
+    const selectedDurationMs = analyticsPeriod === 'custom' && hasValidCustomRange
+      ? (new Date(analyticsCustomEnd).getTime() - new Date(analyticsCustomStart).getTime())
+      : getPresetDurationMs(analyticsPeriod);
+
+    const yTicks = [0, 0.25, 0.5, 0.75, 1].map((ratio) => ({
+      ratio,
+      value: Math.round(roundedPeak * (1 - ratio)),
+      y: chartPadding.top + innerHeight * ratio,
+    }));
+
+    const xTickStep = Math.max(1, Math.ceil(timeline.length / 8));
+    const chartBars = timeline.map((item, index) => {
+      const pageviewsHeight = roundedPeak > 0 ? Math.max(2, (item.pageviews / roundedPeak) * innerHeight) : 2;
+      const visitorsHeight = roundedPeak > 0 ? Math.max(2, (item.sessions / roundedPeak) * innerHeight) : 2;
+      const x = chartPadding.left + index * (barWidth + barGap);
+      const pageviewsY = chartPadding.top + innerHeight - pageviewsHeight;
+      const visitorsY = chartPadding.top + innerHeight - visitorsHeight;
+      const showTick = index % xTickStep === 0 || index === timeline.length - 1;
+
+      return {
+        ...item,
+        x,
+        width: barWidth,
+        pageviewsHeight,
+        visitorsHeight,
+        pageviewsY,
+        visitorsY,
+        showTick,
+        tickLabel: formatTimelineTick(item.timestamp, selectedDurationMs),
+      };
+    });
 
     return {
       timeline,
-      timelinePeak,
-      avgPagesPerVisit,
+      timelinePeak: roundedPeak,
+      avgVisitDurationSeconds,
+      chartWidth,
+      chartHeight,
+      chartPadding,
+      innerHeight,
+      chartBars,
+      yTicks,
+      selectedDurationMs,
     };
-  }, [umamiAnalytics]);
+  }, [umamiAnalytics, analyticsPeriod, analyticsCustomStart, analyticsCustomEnd, hasValidCustomRange]);
 
-  const renderBreakdownRows = (rows) => {
+  const canShiftForward = useMemo(() => {
+    if (analyticsPeriod !== 'custom' || !hasValidCustomRange) {
+      return false;
+    }
+
+    const end = new Date(analyticsCustomEnd).getTime();
+    return end < Date.now() - 60 * 1000;
+  }, [analyticsPeriod, analyticsCustomEnd, hasValidCustomRange]);
+
+  const renderBreakdownRows = (rows, options = {}) => {
+    const showFullCountry = options.type === 'country';
     if (!Array.isArray(rows) || rows.length === 0) {
       return (
         <p className="font-san text-sm text-brand-muted">
@@ -278,23 +426,40 @@ export default function AdminPage() {
       <div className="space-y-2">
         {rows.map((row, index) => {
           const visitors = Number(row?.visitors || 0);
-          const pageviews = Number(row?.pageviews || 0);
-          const ratio = visitors > 0 ? ((pageviews / visitors).toFixed(2)) : '--';
+          const displayName = showFullCountry
+            ? getCountryDisplayName(row?.name)
+            : (row?.name || '-');
 
           return (
-            <div key={`${row?.name || 'item'}-${index}`} className="grid grid-cols-[1fr_auto_auto] items-center gap-3 border-b last:border-b-0 py-2">
-              <p className="font-san text-sm text-brand-charcoal truncate" title={row?.name || ''}>{row?.name || '-'}</p>
-              <p className="font-san text-xs text-brand-muted min-w-[110px] text-right">
-                {t('Visitors', 'Visitors')}: {visitors.toLocaleString('vi-VN')}
-              </p>
-              <p className="font-san text-xs text-brand-muted min-w-[120px] text-right">
-                {t('Pages/Visitor', 'Pages/Visitor')}: {ratio}
+            <div key={`${row?.name || 'item'}-${index}`} className="grid grid-cols-[1fr_auto] items-center gap-3 border-b last:border-b-0 py-2">
+              <p className="font-san text-sm text-brand-charcoal truncate" title={displayName}>{displayName}</p>
+              <p className="font-san text-sm font-medium text-brand-charcoal min-w-[100px] text-right">
+                {visitors.toLocaleString('vi-VN')} {t('visitors', 'visitors')}
               </p>
             </div>
           );
         })}
       </div>
     );
+  };
+
+  const formatDuration = (seconds) => {
+    const totalSeconds = Number(seconds || 0);
+    if (!Number.isFinite(totalSeconds) || totalSeconds <= 0) {
+      return '--';
+    }
+
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const remainSeconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    if (minutes > 0) {
+      return `${minutes}m ${remainSeconds}s`;
+    }
+    return `${remainSeconds}s`;
   };
 
   const resetFeedbackState = ({ includeUpload = true } = {}) => {
@@ -398,9 +563,25 @@ export default function AdminPage() {
     setIsAnalyticsFetching(true);
     setError('');
     try {
+      let startAt;
+      let endAt;
+      if (analyticsPeriod === 'custom') {
+        const startDate = analyticsCustomStart ? new Date(analyticsCustomStart) : null;
+        const endDate = analyticsCustomEnd ? new Date(analyticsCustomEnd) : null;
+        if (!startDate || !endDate || Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime()) || startDate >= endDate) {
+          setError(t('Vui lòng chọn khoảng thời gian hợp lệ cho custom range.', 'Please select a valid custom time range.'));
+          setIsAnalyticsFetching(false);
+          return;
+        }
+        startAt = startDate.getTime();
+        endAt = endDate.getTime();
+      }
+
       const analyticsData = await fetchAdminUmamiAnalytics({
         googleId: user.googleId,
-        days: analyticsDays,
+        period: analyticsPeriod === 'custom' ? undefined : analyticsPeriod,
+        startAt,
+        endAt,
       });
       setUmamiAnalytics(analyticsData);
       setAnalyticsLastFetchedAt(new Date());
@@ -409,6 +590,37 @@ export default function AdminPage() {
     } finally {
       setIsAnalyticsFetching(false);
     }
+  };
+
+  const shiftAnalyticsWindow = (direction) => {
+    const now = Date.now();
+    const customStartMs = analyticsCustomStart ? new Date(analyticsCustomStart).getTime() : null;
+    const customEndMs = analyticsCustomEnd ? new Date(analyticsCustomEnd).getTime() : null;
+
+    let baseStart = customStartMs;
+    let baseEnd = customEndMs;
+    let duration = (baseStart != null && baseEnd != null) ? (baseEnd - baseStart) : null;
+
+    if (analyticsPeriod !== 'custom' || !hasValidCustomRange || duration == null || duration <= 0) {
+      duration = getPresetDurationMs(analyticsPeriod);
+      if (duration == null) {
+        return;
+      }
+      baseEnd = now;
+      baseStart = now - duration;
+    }
+
+    let nextStart = baseStart + (duration * direction);
+    let nextEnd = baseEnd + (duration * direction);
+
+    if (nextEnd > now) {
+      nextEnd = now;
+      nextStart = now - duration;
+    }
+
+    setAnalyticsPeriod('custom');
+    setAnalyticsCustomStart(toDatetimeLocalInput(nextStart));
+    setAnalyticsCustomEnd(toDatetimeLocalInput(nextEnd));
   };
 
   const loadAll = async () => {
@@ -425,13 +637,13 @@ export default function AdminPage() {
   }, [isAuthenticated, isAdmin, user?.googleId]);
 
   useEffect(() => {
-    if (isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics') {
+    if (isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics' && hasValidCustomRange) {
       loadAnalyticsData();
     }
-  }, [isAnalyticsEnabled, tab, analyticsDays, isAuthenticated, isAdmin, user?.googleId]);
+  }, [isAnalyticsEnabled, tab, analyticsPeriod, isAuthenticated, isAdmin, user?.googleId, hasValidCustomRange]);
 
   useEffect(() => {
-    if (!(isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics')) {
+    if (!(isAnalyticsEnabled && isAuthenticated && isAdmin && user?.googleId && tab === 'analytics' && hasValidCustomRange)) {
       return;
     }
 
@@ -440,7 +652,22 @@ export default function AdminPage() {
     }, 60000);
 
     return () => clearInterval(timer);
-  }, [isAnalyticsEnabled, isAuthenticated, isAdmin, user?.googleId, tab, analyticsDays]);
+  }, [isAnalyticsEnabled, isAuthenticated, isAdmin, user?.googleId, tab, analyticsPeriod, hasValidCustomRange]);
+
+  useEffect(() => {
+    if (analyticsPeriod !== 'custom') {
+      return;
+    }
+
+    if (analyticsCustomStart && analyticsCustomEnd) {
+      return;
+    }
+
+    const defaultEnd = umamiAnalytics.endAt || Date.now();
+    const defaultStart = umamiAnalytics.startAt || (defaultEnd - 24 * 60 * 60 * 1000);
+    setAnalyticsCustomStart(toDatetimeLocalInput(defaultStart));
+    setAnalyticsCustomEnd(toDatetimeLocalInput(defaultEnd));
+  }, [analyticsPeriod, analyticsCustomStart, analyticsCustomEnd, umamiAnalytics.startAt, umamiAnalytics.endAt]);
 
   useEffect(() => {
     if (!isAnalyticsEnabled && tab === 'analytics') {
@@ -1488,30 +1715,67 @@ export default function AdminPage() {
 
       {tab === 'analytics' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-2xl p-5 shadow-sm flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="font-golan text-lg mb-2">{t('Umami Analytics', 'Umami Analytics')}</h2>
-              <p className="font-san text-sm text-brand-muted">
-                {t(
-                  'Dữ liệu được đồng bộ từ  API để theo dõi tập trung trong admin.',
-                  'Data is synced from the API for centralized admin monitoring.'
-                )}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <label className="font-san text-sm text-brand-charcoal">{t('Khoảng thời gian', 'Window')}</label>
-              <select
-                value={analyticsDays}
-                onChange={(e) => setAnalyticsDays(Number(e.target.value))}
-                className="border rounded-lg px-3 py-2 font-san text-sm"
+          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              className="inline-flex items-center gap-2 px-3 py-2 rounded-md border border-slate-300 text-slate-700 font-san text-sm"
+            >
+              <Filter size={14} />
+              {t('Filter', 'Filter')}
+            </button>
+
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => shiftAnalyticsWindow(-1)}
+                className="h-10 w-10 inline-flex items-center justify-center rounded-md border border-slate-300 text-slate-700 disabled:opacity-50"
+                aria-label="Previous analytics window"
               >
-                <option value={1}>24h</option>
-                <option value={7}>7 {t('ngày', 'days')}</option>
+                <ChevronLeft size={16} />
+              </button>
+              <button
+                type="button"
+                onClick={() => shiftAnalyticsWindow(1)}
+                disabled={!canShiftForward && analyticsPeriod === 'custom'}
+                className="h-10 w-10 inline-flex items-center justify-center rounded-md border border-slate-300 text-slate-700 disabled:opacity-50"
+                aria-label="Next analytics window"
+              >
+                <ChevronRight size={16} />
+              </button>
+
+              <select
+                value={analyticsPeriod}
+                onChange={(e) => setAnalyticsPeriod(e.target.value)}
+                className="h-10 min-w-[180px] border border-slate-300 rounded-md px-3 py-2 font-san text-sm"
+              >
+                {ANALYTICS_PERIOD_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {t(option.labelVi, option.labelEn)}
+                  </option>
+                ))}
               </select>
+              {analyticsPeriod === 'custom' && (
+                <>
+                  <input
+                    type="datetime-local"
+                    value={analyticsCustomStart}
+                    onChange={(e) => setAnalyticsCustomStart(e.target.value)}
+                    className="h-10 border border-slate-300 rounded-md px-3 py-2 font-san text-sm"
+                    aria-label="Analytics custom start"
+                  />
+                  <input
+                    type="datetime-local"
+                    value={analyticsCustomEnd}
+                    onChange={(e) => setAnalyticsCustomEnd(e.target.value)}
+                    className="h-10 border border-slate-300 rounded-md px-3 py-2 font-san text-sm"
+                    aria-label="Analytics custom end"
+                  />
+                </>
+              )}
               <button
                 type="button"
                 onClick={loadAnalyticsData}
-                className="px-4 py-2 bg-brand-navy text-white rounded-lg font-san text-sm"
+                className="h-10 px-4 py-2 bg-brand-navy text-white rounded-md font-san text-sm"
               >
                 {t('Làm mới', 'Refresh')}
               </button>
@@ -1527,44 +1791,36 @@ export default function AdminPage() {
                   : '--')}
           </p>
 
-          {!umamiAnalytics.configured && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5">
-              <p className="font-san text-sm text-amber-800">
-                {umamiAnalytics.message || t('Chưa cấu hình Umami trong backend.', 'Umami is not configured in backend yet.')}
-              </p>
-              <p className="font-san text-xs text-amber-700 mt-2">
-                {t(
-                  'Cần set: UMAMI_API_KEY và UMAMI_WEBSITE_ID (tuỳ chọn UMAMI_API_BASE_URL).',
-                  'Required env vars: UMAMI_API_KEY and UMAMI_WEBSITE_ID (optional UMAMI_API_BASE_URL).'
-                )}
-              </p>
-            </div>
-          )}
-
           {umamiAnalytics.configured && (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <p className="font-san text-sm text-brand-muted">{t('Visitors', 'Visitors')}</p>
-                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                  <p className="font-golan text-5xl leading-none text-brand-charcoal mt-4">
                     {Number(umamiAnalytics.visitors || 0).toLocaleString('vi-VN')}
                   </p>
                 </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
-                  <p className="font-san text-sm text-brand-muted">{t('Page Views', 'Page Views')}</p>
-                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
-                    {Number(umamiAnalytics.pageviews || 0).toLocaleString('vi-VN')}
-                  </p>
-                </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <p className="font-san text-sm text-brand-muted">{t('Visits', 'Visits')}</p>
-                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                  <p className="font-golan text-5xl leading-none text-brand-charcoal mt-4">
                     {Number(umamiAnalytics.visits || 0).toLocaleString('vi-VN')}
                   </p>
                 </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
-                  <p className="font-san text-sm text-brand-muted">{t('Bounce Rate', 'Bounce Rate')}</p>
-                  <p className="font-golan text-4xl text-brand-charcoal mt-2">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+                  <p className="font-san text-sm text-brand-muted">{t('Views', 'Views')}</p>
+                  <p className="font-golan text-5xl leading-none text-brand-charcoal mt-4">
+                    {Number(umamiAnalytics.pageviews || 0).toLocaleString('vi-VN')}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+                  <p className="font-san text-sm text-brand-muted">{t('Visit duration', 'Visit duration')}</p>
+                  <p className="font-golan text-5xl leading-none text-brand-charcoal mt-4">
+                    {formatDuration(analyticsView.avgVisitDurationSeconds)}
+                  </p>
+                </div>
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+                  <p className="font-san text-sm text-brand-muted">{t('Bounce rate', 'Bounce rate')}</p>
+                  <p className="font-golan text-5xl leading-none text-brand-charcoal mt-4">
                     {umamiAnalytics.bounceRate == null
                       ? '--'
                       : `${Number(umamiAnalytics.bounceRate).toFixed(1)}%`}
@@ -1572,32 +1828,9 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
-                  <p className="font-san text-sm text-brand-muted">{t('Avg. Pages / Visit', 'Avg. Pages / Visit')}</p>
-                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
-                    {analyticsView.avgPagesPerVisit == null ? '--' : analyticsView.avgPagesPerVisit.toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
-                  <p className="font-san text-sm text-brand-muted">{t('Bounces', 'Bounces')}</p>
-                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
-                    {Number(umamiAnalytics.bounces || 0).toLocaleString('vi-VN')}
-                  </p>
-                </div>
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
-                  <p className="font-san text-sm text-brand-muted">{t('Avg. Time / Visit', 'Avg. Time / Visit')}</p>
-                  <p className="font-golan text-3xl text-brand-charcoal mt-2">
-                    {umamiAnalytics.visits > 0
-                      ? `${Math.round((umamiAnalytics.totalTime || 0) / umamiAnalytics.visits)}s`
-                      : '--'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-5 shadow-sm">
-                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-                  <h3 className="font-golan text-lg">{t('Traffic Timeline (Page Views)', 'Traffic Timeline (Page Views)')}</h3>
+              <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+                  <h3 className="font-golan text-lg">{t('Traffic', 'Traffic')}</h3>
                   <p className="font-san text-xs text-brand-muted">
                     {t('Khoảng dữ liệu', 'Data window')}: {' '}
                     {umamiAnalytics.startAt ? new Date(umamiAnalytics.startAt).toLocaleString('vi-VN') : '-'}
@@ -1605,41 +1838,116 @@ export default function AdminPage() {
                     {umamiAnalytics.endAt ? new Date(umamiAnalytics.endAt).toLocaleString('vi-VN') : '-'}
                   </p>
                 </div>
-                <div className="space-y-2 max-h-[320px] overflow-auto pr-1">
-                  {analyticsView.timeline.map((point) => {
-                    const width = Math.max(6, Math.round((point.pageviews / analyticsView.timelinePeak) * 100));
-                    return (
-                      <div key={point.index} className="grid grid-cols-[170px_1fr_auto] items-center gap-3">
-                        <p className="font-san text-xs text-brand-muted truncate">{point.label}</p>
-                        <div className="h-6 bg-brand-cream rounded-md overflow-hidden">
-                          <div className="h-full bg-brand-navy/85" style={{ width: `${width}%` }} />
-                        </div>
-                        <p className="font-san text-sm font-semibold text-brand-charcoal min-w-[58px] text-right">{point.pageviews}</p>
+
+                {analyticsView.chartBars.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="w-full overflow-x-auto rounded-lg border border-slate-200 bg-white px-2 py-2">
+                      <svg
+                        viewBox={`0 0 ${analyticsView.chartWidth} ${analyticsView.chartHeight}`}
+                        className="w-full min-w-[760px] h-[320px]"
+                        role="img"
+                        aria-label="Traffic timeline chart"
+                      >
+                        {analyticsView.yTicks.map((tick, idx) => (
+                          <g key={`tick-${idx}`}>
+                            <line
+                              x1={analyticsView.chartPadding.left}
+                              y1={tick.y}
+                              x2={analyticsView.chartWidth - analyticsView.chartPadding.right}
+                              y2={tick.y}
+                              stroke="#e5e7eb"
+                              strokeWidth="1"
+                            />
+                            <text
+                              x={analyticsView.chartPadding.left - 8}
+                              y={tick.y + 4}
+                              textAnchor="end"
+                              className="fill-slate-500"
+                              style={{ fontSize: 11 }}
+                            >
+                              {tick.value}
+                            </text>
+                          </g>
+                        ))}
+
+                        {analyticsView.chartBars.map((bar) => (
+                          <g
+                            key={bar.index}
+                            onMouseEnter={() => setAnalyticsHoveredBar(bar)}
+                            onMouseLeave={() => setAnalyticsHoveredBar(null)}
+                          >
+                            <rect
+                              x={bar.x}
+                              y={bar.pageviewsY}
+                              width={bar.width}
+                              height={bar.pageviewsHeight}
+                              rx="4"
+                              fill="#93c5fd"
+                              fillOpacity="0.9"
+                            />
+                            <rect
+                              x={bar.x}
+                              y={bar.visitorsY}
+                              width={bar.width}
+                              height={bar.visitorsHeight}
+                              rx="4"
+                              fill="#2563eb"
+                              fillOpacity="0.9"
+                            />
+                          </g>
+                        ))}
+
+                        {analyticsView.chartBars.map((bar) => (
+                          bar.showTick ? (
+                            <text
+                              key={`xlabel-${bar.index}`}
+                              x={bar.x + bar.width / 2}
+                              y={analyticsView.chartHeight - 12}
+                              textAnchor="middle"
+                              className="fill-slate-500"
+                              style={{ fontSize: 11 }}
+                            >
+                              {bar.tickLabel}
+                            </text>
+                          ) : null
+                        ))}
+                      </svg>
+                    </div>
+
+                    <div className="flex items-center gap-4 font-san text-sm text-brand-charcoal">
+                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" />{t('Visitors', 'Visitors')}</span>
+                      <span className="inline-flex items-center gap-2"><span className="h-2.5 w-2.5 rounded-full bg-blue-300" />{t('Views', 'Views')}</span>
+                    </div>
+
+                    {analyticsHoveredBar && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 font-san text-sm text-brand-charcoal">
+                        <p className="text-xs text-slate-500">{analyticsHoveredBar.label}</p>
+                        <p>{t('Visitors', 'Visitors')}: {analyticsHoveredBar.sessions.toLocaleString('vi-VN')}</p>
+                        <p>{t('Views', 'Views')}: {analyticsHoveredBar.pageviews.toLocaleString('vi-VN')}</p>
                       </div>
-                    );
-                  })}
-                  {analyticsView.timeline.length === 0 && (
-                    <p className="font-san text-sm text-brand-muted">
-                      {t('Chưa có timeline analytics cho khoảng thời gian đã chọn.', 'No analytics timeline available for selected range.')}
-                    </p>
-                  )}
-                </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="font-san text-sm text-brand-muted">
+                    {t('Chưa có timeline analytics cho khoảng thời gian đã chọn.', 'No analytics timeline available for selected range.')}
+                  </p>
+                )}
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <h3 className="font-golan text-lg mb-3">{t('Pages', 'Pages')}</h3>
                   {renderBreakdownRows(umamiAnalytics.pages)}
                 </div>
 
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <h3 className="font-golan text-lg mb-3">{t('Referrers', 'Referrers')}</h3>
                   {renderBreakdownRows(umamiAnalytics.referrers)}
                 </div>
               </div>
 
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <h3 className="font-golan text-lg mb-3">{t('Environment', 'Environment')}</h3>
                   <div className="space-y-4">
                     <div>
@@ -1657,7 +1965,7 @@ export default function AdminPage() {
                   </div>
                 </div>
 
-                <div className="bg-white rounded-2xl p-5 shadow-sm border border-brand-cream-dark">
+                <div className="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
                   <h3 className="font-golan text-lg mb-3">{t('Traffic', 'Traffic')}</h3>
                   <div className="space-y-4">
                     <div>
@@ -1666,7 +1974,7 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <p className="font-san text-xs uppercase tracking-wide text-brand-muted mb-2">{t('Countries', 'Countries')}</p>
-                      {renderBreakdownRows(umamiAnalytics.countries)}
+                      {renderBreakdownRows(umamiAnalytics.countries, { type: 'country' })}
                     </div>
                   </div>
                 </div>

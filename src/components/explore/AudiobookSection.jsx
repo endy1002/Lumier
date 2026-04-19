@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Lock, Unlock, Play, Clock } from 'lucide-react';
+import { Lock, Unlock, Play, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { fetchExploreAudiobooks, verifyExploreAudiobookCode } from '../../services/explore';
 import { useLanguage } from '../../context/LanguageContext';
 
 export default function AudiobookSection({ googleId }) {
+  const PAGE_SIZE = 4;
   const { t, translateText } = useLanguage();
   const [code, setCode] = useState('');
   const [books, setBooks] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
   const [activePlayerBookId, setActivePlayerBookId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,6 +16,14 @@ export default function AudiobookSection({ googleId }) {
   const [success, setSuccess] = useState('');
 
   const unlockedCount = books.filter((book) => book.unlocked).length;
+  const pageCount = Math.max(1, Math.ceil(books.length / PAGE_SIZE));
+  const visibleBooks = books.slice(pageIndex * PAGE_SIZE, pageIndex * PAGE_SIZE + PAGE_SIZE);
+
+  useEffect(() => {
+    if (pageIndex > pageCount - 1) {
+      setPageIndex(Math.max(0, pageCount - 1));
+    }
+  }, [pageIndex, pageCount]);
 
   useEffect(() => {
     let mounted = true;
@@ -172,8 +182,36 @@ export default function AudiobookSection({ googleId }) {
       )}
 
       {/* Audiobook grid */}
+      {books.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between mb-4">
+          <p className="font-san text-sm text-brand-muted">
+            {t('Trang {current}/{total}', 'Page {current}/{total}', { current: pageIndex + 1, total: pageCount })}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPageIndex((prev) => Math.max(0, prev - 1))}
+              disabled={pageIndex === 0}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-brand-cream-dark font-san text-sm text-brand-charcoal disabled:opacity-40"
+            >
+              <ChevronLeft size={14} />
+              {t('Trước', 'Back')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setPageIndex((prev) => Math.min(pageCount - 1, prev + 1))}
+              disabled={pageIndex >= pageCount - 1}
+              className="inline-flex items-center gap-1 px-3 py-2 rounded-lg border border-brand-cream-dark font-san text-sm text-brand-charcoal disabled:opacity-40"
+            >
+              {t('Tiếp', 'Next')}
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {books.map((book) => (
+        {visibleBooks.map((book) => (
           <div
             key={book.id}
             className={`bg-white rounded-2xl overflow-hidden shadow-sm transition-all ${
