@@ -70,7 +70,7 @@ export default function TopNavigation({ onCartClick }) {
             <img
               src="/images/lumier-logo.png"
               alt="LUMIER"
-              className="h-14 md:h-16 w-auto"
+              className="h-12 md:h-12 w-auto"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'block';
