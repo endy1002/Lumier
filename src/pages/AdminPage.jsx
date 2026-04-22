@@ -97,6 +97,8 @@ const COUNTRY_NAME_RESOLVER = typeof Intl !== 'undefined' && typeof Intl.Display
   ? new Intl.DisplayNames(['vi', 'en'], { type: 'region' })
   : null;
 
+const GMT_PLUS_7_OFFSET_MINUTES = 7 * 60;
+
 function getCountryDisplayName(value) {
   const raw = String(value || '').trim();
   if (!raw) {
@@ -121,6 +123,33 @@ function toDatetimeLocalInput(ms) {
   const date = new Date(ms);
   const timezoneOffset = date.getTimezoneOffset() * 60000;
   return new Date(date.getTime() - timezoneOffset).toISOString().slice(0, 16);
+}
+
+function toGmtPlus7DatetimeLocalInput(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return new Date(date.getTime() + GMT_PLUS_7_OFFSET_MINUTES * 60000).toISOString().slice(0, 16);
+}
+
+function gmtPlus7DatetimeLocalToIso(value) {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.length === 16 ? `${value}:00` : value;
+  const date = new Date(`${normalized}+07:00`);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
 }
 
 function getPresetDurationMs(period) {
@@ -203,9 +232,7 @@ function toAudiobookForm(item) {
 }
 
 function toBlogForm(item) {
-  const normalizedDate = item?.publishedAt
-    ? new Date(item.publishedAt).toISOString().slice(0, 16)
-    : '';
+  const normalizedDate = toGmtPlus7DatetimeLocalInput(item?.publishedAt);
 
   return {
     ...EMPTY_BLOG,
@@ -1027,7 +1054,7 @@ export default function AdminPage() {
       seoDescription: blogForm.seoDescription,
       isPublished: Boolean(blogForm.isPublished),
       publishedAt: blogForm.isPublished && blogForm.publishedAt
-        ? new Date(blogForm.publishedAt).toISOString()
+        ? gmtPlus7DatetimeLocalToIso(blogForm.publishedAt)
         : null,
     };
 
@@ -1533,6 +1560,7 @@ export default function AdminPage() {
                 onChange={(e) => setBlogForm((v) => ({ ...v, publishedAt: e.target.value }))}
                 className="border rounded-lg px-3 py-2 font-san text-sm"
               />
+              <p className="text-xs text-slate-500 font-san">Thời gian hiển thị theo GMT+7 (Việt Nam).</p>
             </div>
 
             <div className="flex gap-2">
