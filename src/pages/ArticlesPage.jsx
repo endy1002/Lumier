@@ -182,6 +182,31 @@ export default function ArticlesPage() {
     };
   }, [slug, t]);
 
+  useEffect(() => {
+    if (selectedArticle) {
+      const newTitle = selectedArticle.seoTitle || selectedArticle.title || 'LUMIER';
+      document.title = newTitle;
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', selectedArticle.seoDescription || selectedArticle.excerpt || '');
+      }
+    } else {
+      document.title = 'LUMIER - Chạm tri thức, rực bản nguyên';
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', 'LUMIER - Chạm tri thức, rực bản nguyên. Nền tảng thương mại điện tử bán Bookcharm, Bookmark và Sổ note nghệ thuật.');
+      }
+    }
+
+    return () => {
+      document.title = 'LUMIER - Chạm tri thức, rực bản nguyên';
+      const metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', 'LUMIER - Chạm tri thức, rực bản nguyên. Nền tảng thương mại điện tử bán Bookcharm, Bookmark và Sổ note nghệ thuật.');
+      }
+    };
+  }, [selectedArticle]);
+
   const hasModal = Boolean(slug);
 
   const emptyMessage = useMemo(
