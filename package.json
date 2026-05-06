@@ -7,7 +7,7 @@
     "dev": "vite",
     "backend:dev": "./scripts/run-backend-dev.sh",
     "db:sync:prod-to-local": "./scripts/sync-prod-db-to-local.sh",
-    "build": "vite build",
+    "build": "vite build && node scripts/generate-blog-ssg.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

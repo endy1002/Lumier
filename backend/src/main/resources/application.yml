@@ -46,3 +46,5 @@ app:
     base-url: ${UMAMI_API_BASE_URL:https://api.umami.is/v1}
     api-key: ${UMAMI_API_KEY:}
     website-id: ${UMAMI_WEBSITE_ID:}
+  vercel:
+    deploy-hook-url: ${VERCEL_DEPLOY_HOOK_URL:}

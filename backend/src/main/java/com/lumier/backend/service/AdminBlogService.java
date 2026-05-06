@@ -17,13 +17,16 @@ public class AdminBlogService {
 
   private final AdminAuthorizationService adminAuthorizationService;
   private final BlogPostRepository blogPostRepository;
+  private final VercelDeployService vercelDeployService;
 
   public AdminBlogService(
     AdminAuthorizationService adminAuthorizationService,
-    BlogPostRepository blogPostRepository
+    BlogPostRepository blogPostRepository,
+    VercelDeployService vercelDeployService
   ) {
     this.adminAuthorizationService = adminAuthorizationService;
     this.blogPostRepository = blogPostRepository;
+    this.vercelDeployService = vercelDeployService;
   }
 
   @Transactional(readOnly = true)
@@ -43,7 +46,9 @@ public class AdminBlogService {
     BlogPost post = new BlogPost();
     applyUpsert(post, request, null);
 
-    return toItem(blogPostRepository.save(post));
+    AdminBlogItemResponse response = toItem(blogPostRepository.save(post));
+    vercelDeployService.triggerDeploy("blog-create");
+    return response;
   }
 
   @Transactional
@@ -56,7 +61,9 @@ public class AdminBlogService {
 
     applyUpsert(post, request, requiredBlogId);
 
-    return toItem(blogPostRepository.save(Objects.requireNonNull(post)));
+    AdminBlogItemResponse response = toItem(blogPostRepository.save(Objects.requireNonNull(post)));
+    vercelDeployService.triggerDeploy("blog-update");
+    return response;
   }
 
   @Transactional
@@ -68,6 +75,7 @@ public class AdminBlogService {
       .orElseThrow(() -> new EntityNotFoundException("Không tìm thấy bài viết."));
 
     blogPostRepository.delete(Objects.requireNonNull(post));
+    vercelDeployService.triggerDeploy("blog-delete");
   }
 
   private void applyUpsert(BlogPost post, AdminUpsertBlogRequest request, Long currentId) {
