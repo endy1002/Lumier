@@ -10,18 +10,18 @@
     <loc>https://lumierbookcharm.store/san-pham</loc>
     <lastmod>2026-04-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://lumierbookcharm.store/kham-pha</loc>
     <lastmod>2026-04-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.5</priority>
   </url>
   <url>
     <loc>https://lumierbookcharm.store/bai-viet</loc>
     <lastmod>2026-04-30</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
+    <priority>1.0</priority>
   </url>
 </urlset>
